@@ -30,6 +30,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Naver Map API Key -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="ahyn3sahcb" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

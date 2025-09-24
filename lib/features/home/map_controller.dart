@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
-import '../../core/constants/api_keys.dart';
 import '../../core/services/logging/app_logger.dart';
 
 /// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
@@ -28,23 +27,10 @@ class MapController {
   /// 현재 위치
   NLatLng get currentPosition => _currentPosition.value;
 
-  /// 네이버 맵 초기화
+  /// 네이버 맵 초기화 (이제 main.dart에서 처리됨)
   static Future<void> initialize() async {
-    try {
-      // API 키 유효성 검사
-      if (!ApiKeys.isValidNaverMapKey(ApiKeys.naverMapClientId)) {
-        AppLogger.warning('⚠️ Naver Map API key not configured properly. Please set your API key in api_keys.dart');
-      }
-
-      // 네이버 맵 SDK 초기화 (단순화)
-      // API 키는 AndroidManifest.xml과 Info.plist에서 설정
-      AppLogger.info('네이버 맵 초기화 시작 (API Key: ${ApiKeys.naverMapClientId.substring(0, 10)}...)');
-
-      AppLogger.info('네이버 맵 SDK 초기화 완료');
-    } catch (e) {
-      AppLogger.error('네이버 맵 초기화 오류', error: e);
-      rethrow;
-    }
+    // main.dart에서 FlutterNaverMap().init()으로 초기화되므로 별도 처리 불필요
+    AppLogger.info('네이버 맵은 이미 main.dart에서 초기화됨');
   }
 
   /// 맵 컨트롤러 설정
