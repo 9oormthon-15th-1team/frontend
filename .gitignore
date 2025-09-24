@@ -1,0 +1,187 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Security & Credentials - NEVER commit these!
+*.env
+*.env.local
+*.env.development
+*.env.production
+*.env.staging
+.env.*
+!.env.example
+config.json
+secrets.json
+credentials.json
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+api_keys.dart
+secrets.dart
+*.key
+*.pem
+*.p12
+*.keystore
+*.jks
+key.properties
+signing.properties
+auth.json
+service-account.json
+private-key.json
+
+# Development Environment
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/.ropeproject
+*.code-workspace
+.fleet/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/scopes/
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+
+# Build & Generated Files
+build/
+.build/
+dist/
+out/
+generated/
+**/generated_plugin_registrant.dart
+**/GeneratedPluginRegistrant.swift
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.m
+lib/generated/
+lib/**/*.g.dart
+lib/**/*.freezed.dart
+lib/**/*.chopper.dart
+lib/**/*.drift.dart
+**/*.mocks.dart
+**/*.config.dart
+**/*.reflectable.dart
+**/*.pb.dart
+**/*.pbenum.dart
+**/*.pbgrpc.dart
+**/*.pbjson.dart
+
+# Logs & Debug
+*.log
+logs/
+*.log.*
+crash_*.log
+flutter_*.log
+test_*.log
+debug.log
+error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing & Coverage
+coverage/
+test_coverage/
+lcov.info
+**/coverage/
+test/coverage/
+integration_test/coverage/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+.#*
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Local Development
+local.properties
+flutter_export_environment.sh
+.metadata
+.last_build_id
+.fvm/
+tool/
+
+# Node.js (if using)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Package managers
+.pub-cache/
+.packages
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies

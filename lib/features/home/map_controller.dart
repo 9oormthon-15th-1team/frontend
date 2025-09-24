@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
+
+import '../../core/constants/api_keys.dart';
+import '../../core/services/logging/app_logger.dart';
+
+/// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
+class MapController {
+  NaverMapController? _mapController;
+  final ValueNotifier<bool> _isMapReady = ValueNotifier<bool>(false);
+  final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
+    const NLatLng(37.5666805, 126.9784147), // 서울시청 기본 위치
+  );
+  final ValueNotifier<String> _currentAddress = ValueNotifier<String>('위치 로딩 중...');
+
+  /// 맵 준비 상태 notifier
+  ValueNotifier<bool> get isMapReadyNotifier => _isMapReady;
+
+  /// 현재 위치 notifier
+  ValueNotifier<NLatLng> get currentPositionNotifier => _currentPosition;
+
+  /// 현재 주소 notifier
+  ValueNotifier<String> get currentAddressNotifier => _currentAddress;
+
+  /// 현재 맵 컨트롤러
+  NaverMapController? get mapController => _mapController;
+
+  /// 현재 위치
+  NLatLng get currentPosition => _currentPosition.value;
+
+  /// 네이버 맵 초기화
+  static Future<void> initialize() async {
+    try {
+      // API 키 유효성 검사
+      if (!ApiKeys.isValidNaverMapKey(ApiKeys.naverMapClientId)) {
+        AppLogger.warning('⚠️ Naver Map API key not configured properly. Please set your API key in api_keys.dart');
+      }
+
+      // 네이버 맵 SDK 초기화 (단순화)
+      // API 키는 AndroidManifest.xml과 Info.plist에서 설정
+      AppLogger.info('네이버 맵 초기화 시작 (API Key: ${ApiKeys.naverMapClientId.substring(0, 10)}...)');
+
+      AppLogger.info('네이버 맵 SDK 초기화 완료');
+    } catch (e) {
+      AppLogger.error('네이버 맵 초기화 오류', error: e);
+      rethrow;
+    }
+  }
+
+  /// 맵 컨트롤러 설정
+  void setMapController(NaverMapController controller) {
+    _mapController = controller;
+    _isMapReady.value = true;
+    AppLogger.info('네이버 맵 컨트롤러 설정 완료');
+  }
+
+  /// 특정 위치로 이동
+  Future<void> moveToPosition(NLatLng position, {double zoom = 14}) async {
+    if (_mapController == null) return;
+
+    try {
+      final cameraUpdate = NCameraUpdate.scrollAndZoomTo(
+        target: position,
+        zoom: zoom,
+      );
+      await _mapController!.updateCamera(cameraUpdate);
+      _currentPosition.value = position;
+      AppLogger.info('맵 위치 이동: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      AppLogger.error('맵 위치 이동 실패', error: e);
+    }
+  }
+
+  /// 서울시청으로 이동
+  Future<void> moveToSeoulCityHall() async {
+    const seoulCityHall = NLatLng(37.5666805, 126.9784147);
+    await moveToPosition(seoulCityHall);
+    _currentAddress.value = '서울특별시 중구 세종대로 110';
+  }
+
+  /// 강남역으로 이동
+  Future<void> moveToGangnam() async {
+    const gangnam = NLatLng(37.4979517, 127.0276188);
+    await moveToPosition(gangnam);
+    _currentAddress.value = '서울특별시 강남구 강남대로 지하 396';
+  }
+
+  /// 홍대입구역으로 이동
+  Future<void> moveToHongdae() async {
+    const hongdae = NLatLng(37.5563528, 126.9236437);
+    await moveToPosition(hongdae);
+    _currentAddress.value = '서울특별시 마포구 양화로 지하 188';
+  }
+
+  /// 줌 레벨 변경
+  Future<void> setZoom(double zoom) async {
+    if (_mapController == null) return;
+
+    try {
+      final cameraUpdate = NCameraUpdate.withParams(zoom: zoom);
+      await _mapController!.updateCamera(cameraUpdate);
+      AppLogger.info('맵 줌 레벨 변경: $zoom');
+    } catch (e) {
+      AppLogger.error('맵 줌 변경 실패', error: e);
+    }
+  }
+
+  /// 줌 인
+  Future<void> zoomIn() async {
+    if (_mapController == null) return;
+    await _mapController!.updateCamera(NCameraUpdate.zoomIn());
+  }
+
+  /// 줌 아웃
+  Future<void> zoomOut() async {
+    if (_mapController == null) return;
+    await _mapController!.updateCamera(NCameraUpdate.zoomOut());
+  }
+
+  /// 마커 추가
+  Future<void> addMarker(NLatLng position, String title) async {
+    if (_mapController == null) return;
+
+    try {
+      final marker = NMarker(
+        id: 'marker_${DateTime.now().millisecondsSinceEpoch}',
+        position: position,
+      );
+
+      final infoWindow = NInfoWindow.onMap(
+        id: 'info_${DateTime.now().millisecondsSinceEpoch}',
+        text: title,
+        position: position,
+      );
+
+      await _mapController!.addOverlay(marker);
+      await _mapController!.addOverlay(infoWindow);
+
+      AppLogger.info('마커 추가: $title at ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      AppLogger.error('마커 추가 실패', error: e);
+    }
+  }
+
+  /// 모든 마커 제거
+  Future<void> clearMarkers() async {
+    if (_mapController == null) return;
+
+    try {
+      await _mapController!.clearOverlays();
+      AppLogger.info('모든 마커 제거');
+    } catch (e) {
+      AppLogger.error('마커 제거 실패', error: e);
+    }
+  }
+
+  /// 메모리 해제
+  void dispose() {
+    _isMapReady.dispose();
+    _currentPosition.dispose();
+    _currentAddress.dispose();
+    _mapController = null;
+  }
+}
