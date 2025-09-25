@@ -74,6 +74,20 @@ class _HomePageState extends State<HomePage> {
           else
             _buildLoadingView(),
 
+          // 현재 위치 버튼
+          Positioned(
+            top: 16,
+            right: 16,
+            child: _buildCurrentLocationButton(),
+          ),
+
+          // 확대/축소 버튼
+          Positioned(
+            top: 80,
+            right: 16,
+            child: _buildZoomButtons(),
+          ),
+
           // 하단 주소 표시 카드만 유지
           Positioned(
             bottom: 16,
@@ -145,37 +159,66 @@ class _HomePageState extends State<HomePage> {
         child: ValueListenableBuilder<String>(
           valueListenable: _mapController.currentAddressNotifier,
           builder: (context, address, child) {
-            return Row(
-              children: [
-                const Icon(Icons.location_on, color: Colors.red, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        '현재 위치',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
+            return ValueListenableBuilder<NLatLng>(
+              valueListenable: _mapController.currentPositionNotifier,
+              builder: (context, position, child) {
+                return Row(
+                  children: [
+                    const Icon(Icons.location_on, color: Colors.red, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            '현재 위치',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            address,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '위도: ${position.latitude.toStringAsFixed(6)}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Text(
+                            '경도: ${position.longitude.toStringAsFixed(6)}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        address,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, size: 20),
+                      onPressed: () => _mapController.getCurrentLocation(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 24,
+                        minHeight: 24,
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -183,6 +226,111 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildCurrentLocationButton() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _mapController.isMapReadyNotifier,
+      builder: (context, isReady, child) {
+        return FloatingActionButton(
+          onPressed: isReady ? () => _mapController.getCurrentLocation() : null,
+          backgroundColor: isReady ? Colors.white : Colors.grey,
+          foregroundColor: isReady ? Colors.blue : Colors.white,
+          elevation: 4,
+          mini: true,
+          child: const Icon(Icons.my_location),
+        );
+      },
+    );
+  }
+
+  Widget _buildZoomButtons() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _mapController.isMapReadyNotifier,
+      builder: (context, isReady, child) {
+        return Column(
+          children: [
+            // 확대 버튼
+            Container(
+              decoration: BoxDecoration(
+                color: isReady ? Colors.white : Colors.grey,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(4),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isReady ? () => _mapController.zoomIn() : null,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(4),
+                  ),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    child: Icon(
+                      Icons.add,
+                      color: isReady ? Colors.black87 : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 구분선
+            Container(
+              height: 1,
+              width: 40,
+              color: Colors.grey[300],
+            ),
+            // 축소 버튼
+            Container(
+              decoration: BoxDecoration(
+                color: isReady ? Colors.white : Colors.grey,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(4),
+                  bottomRight: Radius.circular(4),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isReady ? () => _mapController.zoomOut() : null,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(4),
+                    bottomRight: Radius.circular(4),
+                  ),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    child: Icon(
+                      Icons.remove,
+                      color: isReady ? Colors.black87 : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Widget _buildQuickLocationBar() {
     return ValueListenableBuilder<bool>(
