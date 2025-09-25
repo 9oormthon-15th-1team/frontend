@@ -20,6 +20,7 @@ class MapController {
     '위치 로딩 중...',
   );
 
+  final Map<String, NOverlayImage> _markerIconCache = {};
   NOverlayImage? _currentLocationOverlayImage;
 
   // 포트홀 마커 관리
@@ -58,6 +59,9 @@ class MapController {
 
     // 맵이 준비되면 자동으로 현재 위치 가져오기
     getCurrentLocation(context: context, moveMap: true);
+
+    // 기존에 저장해 둔 포트홀 마커가 있다면 맵에 렌더링
+    _renderStoredPotholeMarkers();
   }
 
   /// 특정 위치로 이동
@@ -429,21 +433,38 @@ class MapController {
 
   /// 포트홀 마커 추가
   Future<void> addPotholeMarkers(List<PotholeMarker> markers) async {
-    if (_mapController == null) {
-      AppLogger.warning('맵 컨트롤러가 null이어서 포트홀 마커 추가 불가');
-      return;
-    }
-
     if (markers.isEmpty) {
       AppLogger.info('추가할 포트홀 마커가 없음');
       return;
     }
 
-    try {
-      AppLogger.info('포트홀 마커 추가 시작: ${markers.length}개');
+    AppLogger.info('포트홀 마커 저장: ${markers.length}개');
 
-      _potholeMarkers.clear();
-      _potholeMarkers.addAll(markers);
+    _potholeMarkers
+      ..clear()
+      ..addAll(markers);
+
+    if (_mapController == null) {
+      AppLogger.info('맵 컨트롤러 준비 전, 마커만 저장함');
+      return;
+    }
+
+    await _renderStoredPotholeMarkers();
+  }
+
+  Future<void> _renderStoredPotholeMarkers() async {
+    if (_mapController == null) {
+      AppLogger.warning('맵 컨트롤러가 없어 저장된 마커 렌더링 불가');
+      return;
+    }
+
+    if (_potholeMarkers.isEmpty) {
+      AppLogger.info('렌더링할 포트홀 마커가 없음');
+      return;
+    }
+
+    try {
+      AppLogger.info('포트홀 마커 렌더링 시작: ${_potholeMarkers.length}개');
 
       // 기존 포트홀 마커 제거
       await _clearPotholeMarkers();
@@ -452,9 +473,10 @@ class MapController {
       int successCount = 0;
       final batchSize = 10; // 한 번에 10개씩 추가
 
-      for (int i = 0; i < markers.length; i += batchSize) {
-        final endIndex = (i + batchSize < markers.length) ? i + batchSize : markers.length;
-        final batch = markers.sublist(i, endIndex);
+      for (int i = 0; i < _potholeMarkers.length; i += batchSize) {
+        final endIndex =
+            (i + batchSize < _potholeMarkers.length) ? i + batchSize : _potholeMarkers.length;
+        final batch = _potholeMarkers.sublist(i, endIndex);
 
         AppLogger.info('마커 배치 ${i ~/ batchSize + 1} 추가 중: ${batch.length}개');
 
@@ -468,14 +490,14 @@ class MapController {
         }
 
         // 배치 간 잠깐 대기 (메모리 정리 시간 확보)
-        if (i + batchSize < markers.length) {
+        if (i + batchSize < _potholeMarkers.length) {
           await Future.delayed(const Duration(milliseconds: 100));
         }
       }
 
-      AppLogger.info('포트홀 마커 추가 완료: $successCount/${markers.length}개 성공');
+      AppLogger.info('포트홀 마커 렌더링 완료: $successCount/${_potholeMarkers.length}개 성공');
     } catch (e) {
-      AppLogger.error('포트홀 마커 추가 전체 실패', error: e);
+      AppLogger.error('포트홀 마커 렌더링 실패', error: e);
     }
   }
 
@@ -496,28 +518,48 @@ class MapController {
         return;
       }
 
+      NOverlayImage? icon;
+      if (marker.type == PotholeMarkerType.individual) {
+        try {
+          icon = await _getMarkerIcon(marker.status);
+        } catch (e, stackTrace) {
+          AppLogger.warning(
+            '커스텀 마커 아이콘 로드 실패: ${marker.id}, status: ${marker.status}',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          icon = null;
+        }
+      }
+
+      final hasCustomIcon = icon != null;
+
       final nMarker = NMarker(
         id: marker.id,
         position: marker.position,
-        size: const NSize(32, 32),
-        anchor: const NPoint(0.5, 1.0), // 마커의 하단 중앙을 위치에 맞춤
+        size: hasCustomIcon ? const NSize(40, 40) : NMarker.autoSize,
+        anchor: hasCustomIcon
+            ? const NPoint(0.5, 1.0)
+            : NMarker.defaultAnchor, // 기본 마커는 기본 앵커 사용
+        icon: icon,
       );
 
-      // 먼저 기본 마커 색상 설정 (더 안전한 방법)
-      Color markerColor;
-      switch (marker.riskLevel) {
-        case PotholeRiskLevel.high:
-          markerColor = Colors.red;
-          break;
-        case PotholeRiskLevel.medium:
-          markerColor = Colors.orange;
-          break;
-        case PotholeRiskLevel.low:
-          markerColor = Colors.yellow;
-          break;
-      }
+      if (marker.type == PotholeMarkerType.cluster || !hasCustomIcon) {
+        Color markerColor;
+        switch (marker.riskLevel) {
+          case PotholeRiskLevel.high:
+            markerColor = Colors.red;
+            break;
+          case PotholeRiskLevel.medium:
+            markerColor = Colors.orange;
+            break;
+          case PotholeRiskLevel.low:
+            markerColor = Colors.yellow;
+            break;
+        }
 
-      nMarker.setIconTintColor(markerColor);
+        nMarker.setIconTintColor(markerColor);
+      }
       AppLogger.info('기본 색상 마커 설정: ${marker.id}, 색상: ${marker.riskLevel}');
 
       // 마커 클릭 이벤트 설정
@@ -537,6 +579,34 @@ class MapController {
     } catch (e) {
       AppLogger.error('포트홀 마커 추가 실패: ${marker.id}', error: e);
       // 재시도 또는 기본 마커로 대체하지 않음 (로그만 남김)
+    }
+  }
+
+  Future<NOverlayImage> _getMarkerIcon(String status) async {
+    final key = status.toLowerCase();
+    final cached = _markerIconCache[key];
+    if (cached != null) {
+      return cached;
+    }
+
+    final assetPath = _mapStatusToAsset(key);
+    final overlay = NOverlayImage.fromAssetImage(assetPath);
+
+    _markerIconCache[key] = overlay;
+    return overlay;
+  }
+
+  String _mapStatusToAsset(String status) {
+    switch (status) {
+      case 'small':
+        return 'assets/images/general.png';
+      case 'medium':
+      case 'meduim':
+        return 'assets/images/waring.png';
+      case 'high':
+        return 'assets/images/danger.png';
+      default:
+        return 'assets/images/general.png';
     }
   }
 
@@ -627,6 +697,9 @@ class MapController {
                 riskLevel: PotholeRiskLevel.high,
                 description: potholeData['description'] ?? '',
                 reportedAt: DateTime.tryParse(potholeData['createdAt'] ?? '') ?? DateTime.now(),
+                status: (potholeData['status'] ?? potholeData['size'] ?? 'high')
+                    .toString()
+                    .toLowerCase(),
               );
               allMarkers.add(PotholeMarker.individual(pothole));
               AppLogger.info('pothole_data.json에서 포트홀 ${pothole.id} 파싱 완료');
@@ -711,6 +784,9 @@ class MapController {
       riskLevel: _parseRiskLevel(json['riskLevel']),
       description: json['description'] ?? '',
       reportedAt: DateTime.tryParse(json['reportedAt'] ?? '') ?? DateTime.now(),
+      status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
+          .toString()
+          .toLowerCase(),
     );
   }
 
@@ -752,6 +828,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.high,
           description: '큰 포트홀',
           reportedAt: DateTime.now(),
+          status: 'high',
         ),
       ),
       PotholeMarker.individual(
@@ -762,6 +839,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.medium,
           description: '중간 포트홀',
           reportedAt: DateTime.now(),
+          status: 'medium',
         ),
       ),
       PotholeMarker.individual(
@@ -772,6 +850,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '작은 포트홀',
           reportedAt: DateTime.now(),
+          status: 'small',
         ),
       ),
 
@@ -806,6 +885,7 @@ class MapController {
     _currentAddress.dispose();
     _potholeMarkers.clear();
     _activeMarkers.clear();
+    _markerIconCache.clear();
     _currentLocationOverlayImage = null;
     _mapController = null;
   }

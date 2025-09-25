@@ -124,6 +124,13 @@ class _HomePageState extends State<HomePage>
             child: _buildCurrentLocationButton(),
           ),
 
+          // 확대/축소 버튼
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 140,
+            right: 13,
+            child: _buildZoomButtons(),
+          ),
+
           // 하단 버튼들
           Positioned(
             bottom: 20,
@@ -159,22 +166,7 @@ class _HomePageState extends State<HomePage>
       onMapTapped: (NPoint point, NLatLng latLng) {
         AppLogger.info('맵 탭: ${latLng.latitude}, ${latLng.longitude}');
       },
-      onCameraChange: (NCameraUpdateReason reason, bool animated) async {
-        // 줌 레벨 변경시 포트홀 마커 업데이트 (덜 자주 호출되도록 제한)
-        if (_mapController.mapController != null &&
-            reason == NCameraUpdateReason.gesture) {
-          try {
-            final cameraPosition = await _mapController.mapController!
-                .getCameraPosition();
-            // 줌 레벨 업데이트를 덜 빈번하게 호출
-            Future.delayed(const Duration(milliseconds: 500), () {
-              _mapController.updateMarkersForZoomLevel(cameraPosition.zoom);
-            });
-          } catch (e) {
-            AppLogger.warning('카메라 변경 시 마커 업데이트 실패', error: e);
-          }
-        }
-      },
+      onCameraChange: null,
     );
   }
 
@@ -341,6 +333,50 @@ class _HomePageState extends State<HomePage>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildZoomButtons() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _mapController.isMapReadyNotifier,
+      builder: (context, isReady, child) {
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                spreadRadius: 1,
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: isReady ? () => _mapController.zoomIn() : null,
+                icon: Icon(
+                  Icons.add,
+                  color: isReady ? Colors.black87 : Colors.grey[400],
+                ),
+                splashRadius: 22,
+              ),
+              Container(height: 1, width: 42, color: Colors.grey[200]),
+              IconButton(
+                onPressed: isReady ? () => _mapController.zoomOut() : null,
+                icon: Icon(
+                  Icons.remove,
+                  color: isReady ? Colors.black87 : Colors.grey[400],
+                ),
+                splashRadius: 22,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

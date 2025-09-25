@@ -24,6 +24,7 @@ class PotholeData {
   final String description;
   final DateTime reportedAt;
   final String? imageUrl;
+  final String status;
 
   const PotholeData({
     required this.id,
@@ -33,6 +34,7 @@ class PotholeData {
     required this.description,
     required this.reportedAt,
     this.imageUrl,
+    this.status = 'medium',
   });
 
   /// 위치 정보를 NLatLng로 변환
@@ -50,6 +52,9 @@ class PotholeData {
       description: json['description'] as String,
       reportedAt: DateTime.parse(json['reportedAt'] as String),
       imageUrl: json['imageUrl'] as String?,
+      status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
+          .toString()
+          .toLowerCase(),
     );
   }
 }
@@ -128,6 +133,9 @@ class PotholeMarker {
         return clusterData?.maxRiskLevel ?? PotholeRiskLevel.medium;
     }
   }
+
+  /// 상태(마커 이미지 매핑용)
+  String get status => potholeData?.status ?? 'medium';
 
   /// 표시할 숫자 (클러스터의 경우)
   int get count => clusterData?.count ?? 1;
