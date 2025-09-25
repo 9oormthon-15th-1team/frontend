@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_config.dart';
-import '../../core/services/debug/debug_helper.dart';
 import 'settings_controller.dart';
+import 'widgets/setting_switch_tile.dart';
+import 'widgets/setting_slider_tile.dart';
+import 'widgets/settings_section.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -18,7 +18,11 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _controller.initialize();
+    _initializeController();
+  }
+
+  Future<void> _initializeController() async {
+    await _controller.initialize();
   }
 
   @override
@@ -31,203 +35,199 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+        title: const Text(
+          '설정',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
       ),
+      backgroundColor: Colors.grey[50],
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         children: [
-          // App Info Section
-          _buildAppInfoCard(context),
-          const SizedBox(height: 16),
+          // 알림 설정 섹션
+          _buildNotificationSection(),
+          const SizedBox(height: 24),
 
-          // Settings Section
-          _buildSettingsCard(context),
-          const SizedBox(height: 16),
+          // 표시 설정 섹션
+          _buildDisplaySection(),
+          const SizedBox(height: 24),
 
-          // Debug Section (only in debug mode)
-          if (AppConfig.enableDebugTools) ...[
-            _buildDebugCard(context),
-            const SizedBox(height: 16),
-          ],
-
-          // Actions Section
-          _buildActionsCard(context),
+          // 기타 설정 섹션
+          _buildOtherSection(),
         ],
       ),
     );
   }
 
-  Widget _buildAppInfoCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'App Information',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: Text('App Name: ${AppConfig.appName}'),
-              subtitle: Text('Version: ${AppConfig.version}'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.code),
-              title: Text('Environment: ${AppConfig.environmentName}'),
-              subtitle: Text('Debug Mode: ${AppConfig.isDebug}'),
-            ),
-          ],
+  Widget _buildNotificationSection() {
+    return SettingsSection(
+      title: '알림 설정',
+      children: [
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.urgentAlarmNotifier,
+          builder: (context, value, child) {
+            return SettingSwitchTile(
+              icon: Icons.notification_important,
+              iconColor: Colors.red,
+              title: '긴급 알림',
+              subtitle: '위험한 포트홀에 접근 시 알림',
+              value: value,
+              onChanged: _controller.setUrgentAlarm,
+            );
+          },
         ),
-      ),
+        const Divider(height: 1),
+        ValueListenableBuilder<double>(
+          valueListenable: _controller.alarmDistanceNotifier,
+          builder: (context, value, child) {
+            return SettingSliderTile(
+              icon: Icons.straighten,
+              title: '알림 거리',
+              subtitle: _controller.formatDistance(value),
+              value: value,
+              min: 100.0,
+              max: 1000.0,
+              divisions: 18,
+              onChanged: _controller.setAlarmDistance,
+              formatLabel: _controller.formatDistance,
+            );
+          },
+        ),
+        const Divider(height: 1),
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.voiceGuideNotifier,
+          builder: (context, value, child) {
+            return SettingSwitchTile(
+              icon: Icons.volume_up,
+              title: '음성 안내',
+              subtitle: '알림 시 음성으로 안내',
+              value: value,
+              onChanged: _controller.setVoiceGuide,
+            );
+          },
+        ),
+        const Divider(height: 1),
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.vibrationNotifier,
+          builder: (context, value, child) {
+            return SettingSwitchTile(
+              icon: Icons.vibration,
+              title: '진동',
+              subtitle: '알림 시 진동 피드백',
+              value: value,
+              onChanged: _controller.setVibration,
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildSettingsCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Preferences',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            ValueListenableBuilder<bool>(
-              valueListenable: _controller.notificationsEnabledNotifier,
-              builder: (context, enabled, child) {
-                return SwitchListTile(
-                  secondary: const Icon(Icons.notifications),
-                  title: const Text('Notifications'),
-                  subtitle: const Text('Enable push notifications'),
-                  value: enabled,
-                  onChanged: _controller.setNotificationsEnabled,
-                );
-              },
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: _controller.darkModeEnabledNotifier,
-              builder: (context, enabled, child) {
-                return SwitchListTile(
-                  secondary: const Icon(Icons.dark_mode),
-                  title: const Text('Dark Mode'),
-                  subtitle: const Text('Use dark theme'),
-                  value: enabled,
-                  onChanged: _controller.setDarkModeEnabled,
-                );
-              },
-            ),
-            ValueListenableBuilder<double>(
-              valueListenable: _controller.textScaleNotifier,
-              builder: (context, scale, child) {
-                return ListTile(
-                  leading: const Icon(Icons.text_fields),
-                  title: const Text('Text Size'),
-                  subtitle: Slider(
-                    value: scale,
-                    min: 0.8,
-                    max: 1.5,
-                    divisions: 7,
-                    label: '${(scale * 100).round()}%',
-                    onChanged: _controller.setTextScale,
-                  ),
-                );
-              },
-            ),
-          ],
+  Widget _buildDisplaySection() {
+    return SettingsSection(
+      title: '표시 설정',
+      children: [
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.dangerOnlyNotifier,
+          builder: (context, value, child) {
+            return SettingSwitchTile(
+              icon: Icons.warning,
+              iconColor: Colors.amber,
+              title: '위험만 표시',
+              subtitle: '위헙 등급의 포트홀만 표시',
+              value: value,
+              onChanged: _controller.setDangerOnly,
+            );
+          },
         ),
-      ),
+        const Divider(height: 1),
+        ValueListenableBuilder<bool>(
+          valueListenable: _controller.recent7DaysNotifier,
+          builder: (context, value, child) {
+            return SettingSwitchTile(
+              icon: Icons.calendar_today,
+              iconColor: Colors.blue,
+              title: '최근 7일만',
+              subtitle: '최근 7일 내 신고된 포트홀만 표시',
+              value: value,
+              onChanged: _controller.setRecent7Days,
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildDebugCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Debug Tools',
-              style: Theme.of(context).textTheme.titleMedium,
+
+  Widget _buildOtherSection() {
+    return SettingsSection(
+      title: '기타',
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.bug_report),
-              title: const Text('Log Device Info'),
-              subtitle: const Text('Print device information to console'),
-              onTap: () => DebugHelper.logDeviceInfo(context),
+            child: const Icon(
+              Icons.refresh,
+              color: Colors.red,
+              size: 24,
             ),
-            ListTile(
-              leading: const Icon(Icons.memory),
-              title: const Text('Log Memory Usage'),
-              subtitle: const Text('Print memory information to console'),
-              onTap: () => DebugHelper.logMemoryUsage(),
-            ),
-            ListTile(
-              leading: const Icon(Icons.border_outer),
-              title: const Text('Toggle Debug Paint'),
-              subtitle: const Text('Show widget boundaries'),
-              onTap: () => DebugHelper.toggleDebugPaintSizeEnabled(),
-            ),
-          ],
+          ),
+          title: const Text('설정 초기화'),
+          subtitle: const Text('모든 설정을 기본값으로 초기화'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _showResetDialog,
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildActionsCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Actions',
-              style: Theme.of(context).textTheme.titleMedium,
+  void _showResetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('설정 초기화'),
+          content: const Text('정말로 모든 설정을 기본값으로 초기화하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Go to Home'),
-              subtitle: const Text('Return to the main screen'),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => context.go('/home'),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.refresh,
-                color: Theme.of(context).colorScheme.primary,
+            ElevatedButton(
+              onPressed: () async {
+                await _controller.resetSettings();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('설정이 초기화되었습니다'),
+                      backgroundColor: Color(0xFFFF5722),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF5722),
+                foregroundColor: Colors.white,
               ),
-              title: Text(
-                'Reset Settings',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              subtitle: const Text('Reset all settings to default'),
-              onTap: () {
-                _controller.resetSettings();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Settings reset to default'),
-                  ),
-                );
-              },
+              child: const Text('초기화'),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
