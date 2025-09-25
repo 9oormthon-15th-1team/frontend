@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 class SettingSliderTile extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String title;
   final String subtitle;
   final double value;
@@ -11,6 +13,7 @@ class SettingSliderTile extends StatelessWidget {
   final Function(double) onChanged;
   final String Function(double)? formatLabel;
   final Color? iconColor;
+  final TextStyle? titleStyle;
 
   const SettingSliderTile({
     super.key,
@@ -24,63 +27,79 @@ class SettingSliderTile extends StatelessWidget {
     required this.onChanged,
     this.formatLabel,
     this.iconColor,
+    this.titleStyle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: (iconColor ?? const Color(0xFFFF5722)).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor ?? const Color(0xFFFF5722),
-              size: 24,
-            ),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFF5722),
-              thumbColor: const Color(0xFFFF5722),
-              inactiveTrackColor: const Color(0xFFFF5722).withOpacity(0.3),
-              overlayColor: const Color(0xFFFF5722).withOpacity(0.1),
-              valueIndicatorColor: const Color(0xFFFF5722),
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              label: formatLabel?.call(value) ?? value.toStringAsFixed(0),
-              onChanged: onChanged,
+    return Semantics(
+      label: '$title, ${formatLabel?.call(value) ?? value.toStringAsFixed(0)}',
+      hint: subtitle,
+      child: Column(
+        children: [
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  child: SvgPicture.asset(
+                    icon,
+                    width: 20,
+                    height: 20,
+                    colorFilter: const ColorFilter.mode(
+                      Color(0xFF4A4A4A),
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: titleStyle ?? const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF2A2A2A),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  formatLabel?.call(value) ?? '${value.toInt()}m',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF757575),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: const Color(0xFFFF6B35),
+                thumbColor: const Color(0xFFFF6B35),
+                inactiveTrackColor: const Color(0xFFE0E0E0),
+                overlayColor: const Color(0xFFFF6B35).withOpacity(0.12),
+                valueIndicatorColor: const Color(0xFFFF6B35),
+                trackHeight: 4.0,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              ),
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                divisions: divisions,
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
