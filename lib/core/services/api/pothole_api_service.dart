@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../models/pothole.dart';
 import '../logging/app_logger.dart';
@@ -134,6 +135,68 @@ class PotholeApiService {
       return potholes;
     } catch (e) {
       AppLogger.error('Error fetching potholes by location: $e');
+      rethrow;
+    }
+  }
+
+  /// 포트홀 제보 API
+  /// POST /reports
+  /// Content-Type: multipart/form-data
+  static Future<Map<String, dynamic>> reportPothole({
+    required double latitude,
+    required double longitude,
+    String? description,
+    List<File>? images,
+  }) async {
+    try {
+      AppLogger.info('Reporting pothole...');
+
+      // 이미지 개수 검증 (최대 6개)
+      if (images != null && images.length > 6) {
+        throw Exception('Maximum 6 images allowed');
+      }
+
+      final uri = Uri.parse('$baseUrl/reports');
+      final request = http.MultipartRequest('POST', uri);
+
+      // 필수 텍스트 필드 추가
+      request.fields['latitude'] = latitude.toString();
+      request.fields['longitude'] = longitude.toString();
+
+      // 선택적 텍스트 필드 추가
+      if (description != null && description.isNotEmpty) {
+        request.fields['description'] = description;
+      }
+
+      // 이미지 파일 추가
+      if (images != null && images.isNotEmpty) {
+        for (int i = 0; i < images.length; i++) {
+          final file = images[i];
+          final multipartFile = await http.MultipartFile.fromPath(
+            'images', // 서버에서 기대하는 필드명
+            file.path,
+            filename: 'image_$i.jpg',
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      AppLogger.info('Sending pothole report with ${images?.length ?? 0} images');
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(responseBody);
+        AppLogger.info('Pothole reported successfully');
+        return responseData;
+      } else {
+        AppLogger.error('Failed to report pothole: ${response.statusCode}');
+        AppLogger.error('Response body: $responseBody');
+        throw Exception('Failed to report pothole: ${response.statusCode}');
+      }
+    } catch (e) {
+      AppLogger.error('Error reporting pothole: $e');
       rethrow;
     }
   }
