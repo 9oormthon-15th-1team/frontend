@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:frontend/core/models/pothole_status.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
@@ -574,14 +575,14 @@ class MapController {
     }
   }
 
-  Future<NOverlayImage> _getMarkerIcon(String status) async {
-    final key = status.toLowerCase();
+  Future<NOverlayImage> _getMarkerIcon(PotholeStatus status) async {
+    final key = status.name.toLowerCase();
     final cached = _markerIconCache[key];
     if (cached != null) {
       return cached;
     }
 
-    final assetPath = _mapStatusToAsset(key);
+    final assetPath = _mapStatusToAsset(status);
     final overlay = NOverlayImage.fromAssetImage(assetPath);
 
     _markerIconCache[key] = overlay;
@@ -743,17 +744,14 @@ class MapController {
     return maxLevel;
   }
 
-  String _mapStatusToAsset(String status) {
+  String _mapStatusToAsset(PotholeStatus status) {
     switch (status) {
-      case 'small':
+      case PotholeStatus.verificationRequired:
         return 'assets/images/general.png';
-      case 'medium':
-      case 'meduim':
+      case PotholeStatus.caution:
         return 'assets/images/waring.png';
-      case 'high':
+      case PotholeStatus.danger:
         return 'assets/images/danger.png';
-      default:
-        return 'assets/images/general.png';
     }
   }
 
@@ -798,7 +796,6 @@ class MapController {
             createdAt: pothole.reportedAt,
             images: selectedImages,
             status: pothole.status,
-            severity: pothole.riskLevel.name,
             firstReportedAt: pothole.reportedAt,
             latestReportedAt: pothole.reportedAt,
             reportCount: 1,
@@ -939,9 +936,7 @@ class MapController {
                 reportedAt:
                     DateTime.tryParse(potholeData['createdAt'] ?? '') ??
                     DateTime.now(),
-                status: (potholeData['status'] ?? potholeData['size'] ?? 'high')
-                    .toString()
-                    .toLowerCase(),
+                status: potholeData['status'] ?? PotholeStatus.danger,
                 complaintId: potholeData['complaintId']?.toString(),
               );
               allMarkers.add(PotholeMarker.individual(pothole));
@@ -1040,9 +1035,7 @@ class MapController {
       riskLevel: _parseRiskLevel(json['riskLevel']),
       description: json['description'] ?? '',
       reportedAt: DateTime.tryParse(json['reportedAt'] ?? '') ?? DateTime.now(),
-      status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
-          .toString()
-          .toLowerCase(),
+      status: json['status'] ?? PotholeStatus.verificationRequired,
       complaintId: json['complaintId']?.toString(),
     );
   }
@@ -1085,7 +1078,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.high,
           description: '심각한 포트홀 - 차량 파손 위험',
           reportedAt: DateTime.now().subtract(const Duration(days: 1)),
-          status: 'high',
+          status: PotholeStatus.danger,
           complaintId: 'HIGH-1001',
         ),
       ),
@@ -1097,7 +1090,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.high,
           description: '깊은 포트홀, 즉시 보수 필요',
           reportedAt: DateTime.now().subtract(const Duration(hours: 6)),
-          status: 'high',
+          status: PotholeStatus.danger,
           complaintId: 'HIGH-1002',
         ),
       ),
@@ -1109,7 +1102,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.high,
           description: '대형 포트홀, 교통 통제 검토 필요',
           reportedAt: DateTime.now().subtract(const Duration(days: 2)),
-          status: 'high',
+          status: PotholeStatus.danger,
           complaintId: 'HIGH-1003',
         ),
       ),
@@ -1123,7 +1116,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.medium,
           description: '중간 크기 포트홀',
           reportedAt: DateTime.now().subtract(const Duration(days: 3)),
-          status: 'medium',
+          status: PotholeStatus.caution,
           complaintId: 'MED-1001',
         ),
       ),
@@ -1137,7 +1130,7 @@ class MapController {
           reportedAt: DateTime.now().subtract(
             const Duration(days: 1, hours: 12),
           ),
-          status: 'medium',
+          status: PotholeStatus.caution,
           complaintId: 'MED-1002',
         ),
       ),
@@ -1149,7 +1142,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.medium,
           description: '아스팔트 균열 확대',
           reportedAt: DateTime.now().subtract(const Duration(hours: 18)),
-          status: 'medium',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'MED-1003',
         ),
       ),
@@ -1161,7 +1154,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.medium,
           description: '차선 경계 포트홀',
           reportedAt: DateTime.now().subtract(const Duration(days: 4)),
-          status: 'medium',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'MED-1004',
         ),
       ),
@@ -1175,7 +1168,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '작은 포트홀',
           reportedAt: DateTime.now().subtract(const Duration(days: 5)),
-          status: 'small',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'LOW-1001',
         ),
       ),
@@ -1187,7 +1180,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '표면 거칠음',
           reportedAt: DateTime.now().subtract(const Duration(days: 6)),
-          status: 'small',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'LOW-1002',
         ),
       ),
@@ -1199,7 +1192,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '경미한 도로 손상',
           reportedAt: DateTime.now().subtract(const Duration(days: 7)),
-          status: 'small',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'LOW-1003',
         ),
       ),
@@ -1211,7 +1204,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '노면 표시선 근처 손상',
           reportedAt: DateTime.now().subtract(const Duration(days: 8)),
-          status: 'small',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'LOW-1004',
         ),
       ),
@@ -1223,7 +1216,7 @@ class MapController {
           riskLevel: PotholeRiskLevel.low,
           description: '인도 근처 작은 균열',
           reportedAt: DateTime.now().subtract(const Duration(days: 10)),
-          status: 'small',
+          status: PotholeStatus.verificationRequired,
           complaintId: 'LOW-1005',
         ),
       ),
@@ -1243,7 +1236,7 @@ class MapController {
               riskLevel: PotholeRiskLevel.high,
               description: '클러스터 내 고위험 포트홀',
               reportedAt: DateTime.now(),
-              status: 'high',
+              status: PotholeStatus.danger,
             ),
           ],
         ),
@@ -1262,7 +1255,7 @@ class MapController {
               riskLevel: PotholeRiskLevel.medium,
               description: '클러스터 내 중위험 포트홀',
               reportedAt: DateTime.now(),
-              status: 'medium',
+              status: PotholeStatus.caution,
             ),
           ],
         ),
@@ -1281,7 +1274,7 @@ class MapController {
               riskLevel: PotholeRiskLevel.low,
               description: '클러스터 내 저위험 포트홀',
               reportedAt: DateTime.now(),
-              status: 'small',
+              status: PotholeStatus.verificationRequired,
             ),
           ],
         ),
