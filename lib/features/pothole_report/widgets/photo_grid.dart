@@ -173,8 +173,8 @@ class PhotoSlot extends StatelessWidget {
 
         // 삭제 버튼
         Positioned(
-          top: 4,
-          right: 4,
+          bottom: 8,
+          right: 8,
           child: GestureDetector(
             onTap: onDelete,
             child: Container(

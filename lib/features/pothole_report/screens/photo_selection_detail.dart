@@ -29,6 +29,7 @@ class _PhotoSelectionDetailScreenState
   late PhotoSelectionState _photoState;
   final ImagePicker _imagePicker = ImagePicker();
   Position? _currentPosition;
+  NaverMapController? _naverMapController;
   bool _isLoading = false;
   bool _isSubmitting = false;
   final TextEditingController _descriptionController = TextEditingController();
@@ -70,6 +71,7 @@ class _PhotoSelectionDetailScreenState
             _locationAddress =
                 '위도: ${position.latitude.toStringAsFixed(6)}, 경도: ${position.longitude.toStringAsFixed(6)}';
           });
+          _updateMapLocation();
         }
       } else {
         if (mounted) {
@@ -85,6 +87,28 @@ class _PhotoSelectionDetailScreenState
         });
       }
       AppLogger.error('위치 정보 획득 실패', error: e);
+    }
+  }
+
+  Future<void> _updateMapLocation() async {
+    if (_currentPosition == null || _naverMapController == null) return;
+
+    final target = NLatLng(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+    );
+
+    try {
+      await _naverMapController!.updateCamera(
+        NCameraUpdate.withParams(target: target, zoom: 16),
+      );
+      _naverMapController!.setLocationTrackingMode(
+        NLocationTrackingMode.follow,
+      );
+      final overlay = _naverMapController!.getLocationOverlay();
+      overlay.setIsVisible(true);
+    } catch (e) {
+      AppLogger.warning('지도 이동 실패', error: e);
     }
   }
 
@@ -335,15 +359,17 @@ class _PhotoSelectionDetailScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // 메인 콘텐츠
+            Expanded(child: _buildMainContent()),
 
-      body: Column(
-        children: [
-          // 메인 콘텐츠
-          Expanded(child: _buildMainContent()),
-
-          // 하단 버튼 영역
-          _buildBottomButtons(),
-        ],
+            // 하단 버튼 영역
+            _buildBottomButtons(),
+          ],
+        ),
       ),
     );
   }
@@ -357,16 +383,30 @@ class _PhotoSelectionDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상단 영역 - 닫기 버튼
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const SizedBox(width: 48), // 좌측 공간 확보
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    '포트홀 신고하기',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -425,7 +465,12 @@ class _PhotoSelectionDetailScreenState
             ),
             zoom: 15,
           ),
+          locationButtonEnable: true,
         ),
+        onMapReady: (controller) {
+          _naverMapController = controller;
+          _updateMapLocation();
+        },
       ),
     );
   }
