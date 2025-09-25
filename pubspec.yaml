@@ -52,6 +52,12 @@ dependencies:
   # HTTP client
   http: ^1.2.2
 
+  # Image picker
+  image_picker: ^1.0.4
+
+  # Shared preferences
+  shared_preferences: ^2.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
