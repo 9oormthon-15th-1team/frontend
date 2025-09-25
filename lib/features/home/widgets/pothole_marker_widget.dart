@@ -27,11 +27,7 @@ class PotholeMarkerWidget extends StatelessWidget {
   Widget _buildTriangleWarningMarker() {
     final svgAsset = _getWarningSvgAsset(marker.riskLevel);
 
-    return SvgPicture.asset(
-      svgAsset,
-      width: size,
-      height: size,
-    );
+    return SvgPicture.asset(svgAsset, width: size, height: size);
   }
 
   /// 원형 숫자 마커 (클러스터용)

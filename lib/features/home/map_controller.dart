@@ -55,10 +55,7 @@ class MapController {
   }
 
   /// 맵 컨트롤러 설정
-  void setMapController(
-    NaverMapController controller,
-    BuildContext context,
-  ) {
+  void setMapController(NaverMapController controller, BuildContext context) {
     _mapController = controller;
     _isMapReady.value = true;
     _buildContext = context;
@@ -213,22 +210,23 @@ class MapController {
       AppLogger.info('현재 위치 가져오는 중...');
 
       // 현재 위치 가져오기 (타임아웃과 함께)
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () async {
-          AppLogger.warning('위치 가져오기 타임아웃, 마지막 알려진 위치 사용');
-          Position? lastPosition = await Geolocator.getLastKnownPosition();
-          if (lastPosition != null) {
-            return lastPosition;
-          }
-          throw Exception('위치 정보를 가져올 수 없습니다');
-        },
-      );
+      Position position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 10),
+            ),
+          ).timeout(
+            const Duration(seconds: 15),
+            onTimeout: () async {
+              AppLogger.warning('위치 가져오기 타임아웃, 마지막 알려진 위치 사용');
+              Position? lastPosition = await Geolocator.getLastKnownPosition();
+              if (lastPosition != null) {
+                return lastPosition;
+              }
+              throw Exception('위치 정보를 가져올 수 없습니다');
+            },
+          );
 
       final currentLatLng = NLatLng(position.latitude, position.longitude);
       AppLogger.info('위치 가져오기 성공: ${position.latitude}, ${position.longitude}');
@@ -279,7 +277,7 @@ class MapController {
       final marker = NMarker(
         id: 'current_location',
         position: _currentPosition.value,
-        size: const NSize(56, 56),
+        size: const NSize(48, 56),
         anchor: const NPoint(0.5, 0.5),
         icon: await _buildCurrentLocationOverlay(context),
       );
@@ -293,7 +291,9 @@ class MapController {
     }
   }
 
-  Future<NOverlayImage> _buildCurrentLocationOverlay(BuildContext context) async {
+  Future<NOverlayImage> _buildCurrentLocationOverlay(
+    BuildContext context,
+  ) async {
     if (_currentLocationOverlayImage != null) {
       return _currentLocationOverlayImage!;
     }
@@ -321,10 +321,7 @@ class MapController {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFF007AFF),
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.1),
@@ -363,7 +360,8 @@ class MapController {
           String address = '';
 
           // 한국 주소 형식으로 조합
-          if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          if (place.administrativeArea != null &&
+              place.administrativeArea!.isNotEmpty) {
             address += place.administrativeArea!;
           }
           if (place.locality != null && place.locality!.isNotEmpty) {
@@ -378,7 +376,8 @@ class MapController {
             if (address.isNotEmpty) address += ' ';
             address += place.thoroughfare!;
           }
-          if (place.subThoroughfare != null && place.subThoroughfare!.isNotEmpty) {
+          if (place.subThoroughfare != null &&
+              place.subThoroughfare!.isNotEmpty) {
             if (address.isNotEmpty) address += ' ';
             address += place.subThoroughfare!;
           }
@@ -439,7 +438,10 @@ class MapController {
   }
 
   /// 포트홀 마커 추가
-  Future<void> addPotholeMarkers(List<PotholeMarker> markers, {BuildContext? context}) async {
+  Future<void> addPotholeMarkers(
+    List<PotholeMarker> markers, {
+    BuildContext? context,
+  }) async {
     if (markers.isEmpty) {
       AppLogger.info('추가할 포트홀 마커가 없음');
       return;
@@ -485,7 +487,10 @@ class MapController {
       final clusterableMarkers = <NClusterableMarker>{};
 
       for (final marker in _potholeMarkers) {
-        final clusterable = await _buildClusterableMarker(marker, context: context);
+        final clusterable = await _buildClusterableMarker(
+          marker,
+          context: context,
+        );
         if (clusterable != null) {
           clusterableMarkers.add(clusterable);
         }
@@ -516,15 +521,19 @@ class MapController {
       return null;
     }
 
-    if (marker.type != PotholeMarkerType.individual || marker.potholeData == null) {
+    if (marker.type != PotholeMarkerType.individual ||
+        marker.potholeData == null) {
       AppLogger.warning('클러스터링 가능한 마커는 개별 포트홀 데이터가 필요합니다: ${marker.id}');
       return null;
     }
 
     try {
       // 위치 검증
-      if (marker.position.latitude.abs() > 90 || marker.position.longitude.abs() > 180) {
-        AppLogger.error('잘못된 위치 좌표: ${marker.id} - ${marker.position.latitude}, ${marker.position.longitude}');
+      if (marker.position.latitude.abs() > 90 ||
+          marker.position.longitude.abs() > 180) {
+        AppLogger.error(
+          '잘못된 위치 좌표: ${marker.id} - ${marker.position.latitude}, ${marker.position.longitude}',
+        );
         return null;
       }
 
@@ -533,7 +542,7 @@ class MapController {
         id: marker.id,
         position: marker.position,
         icon: icon,
-        size: const NSize(40, 40),
+        size: const NSize(32, 40),
         anchor: const NPoint(0.5, 1.0),
         tags: {
           'riskLevel': marker.riskLevel.name,
@@ -546,13 +555,21 @@ class MapController {
         try {
           _onPotholeMarkerTapped(marker);
         } catch (e, stackTrace) {
-          AppLogger.error('클러스터블 마커 탭 처리 실패: ${marker.id}', error: e, stackTrace: stackTrace);
+          AppLogger.error(
+            '클러스터블 마커 탭 처리 실패: ${marker.id}',
+            error: e,
+            stackTrace: stackTrace,
+          );
         }
       });
 
       return clusterableMarker;
     } catch (e, stackTrace) {
-      AppLogger.error('클러스터링 가능한 마커 생성 실패: ${marker.id}', error: e, stackTrace: stackTrace);
+      AppLogger.error(
+        '클러스터링 가능한 마커 생성 실패: ${marker.id}',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -586,20 +603,17 @@ class MapController {
     final textSize = label.length <= 2
         ? 18.0
         : label.length == 3
-            ? 16.0
-            : 14.0;
+        ? 16.0
+        : 14.0;
 
     final overlay = await NOverlayImage.fromWidget(
       context: context,
-      size: const Size(64, 64),
+      size: const Size(56, 64),
       widget: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
-            colors: [
-              backgroundColor,
-              _darkenColor(backgroundColor, 0.15),
-            ],
+            colors: [backgroundColor, _darkenColor(backgroundColor, 0.15)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -630,14 +644,17 @@ class MapController {
     return overlay;
   }
 
-  void configureClusterMarker(NClusterInfo clusterInfo, NClusterMarker clusterMarker) {
+  void configureClusterMarker(
+    NClusterInfo clusterInfo,
+    NClusterMarker clusterMarker,
+  ) {
     final context = _buildContext;
     final riskLevel = _resolveClusterRiskLevel(clusterInfo);
     final label = _formatClusterLabel(clusterInfo.size);
     final color = _getRiskColor(riskLevel);
 
     clusterMarker
-      ..setSize(const NSize(64, 64))
+      ..setSize(const NSize(56, 64))
       ..setAnchor(const NPoint(0.5, 0.5))
       ..setGlobalZIndex(1200)
       ..setIsForceShowIcon(true)
@@ -656,7 +673,11 @@ class MapController {
     clusterMarker.setIconTintColor(color);
 
     if (context != null && context.mounted) {
-      _getClusterMarkerIcon(label: label, riskLevel: riskLevel, context: context).then(
+      _getClusterMarkerIcon(
+        label: label,
+        riskLevel: riskLevel,
+        context: context,
+      ).then(
         (icon) => clusterMarker.setIcon(icon),
         onError: (error, stackTrace) {
           AppLogger.warning(
@@ -677,7 +698,8 @@ class MapController {
 
   NaverMapClusteringOptions buildClusteringOptions() {
     return NaverMapClusteringOptions(
-      clusterMarkerBuilder: (info, marker) => configureClusterMarker(info, marker),
+      clusterMarkerBuilder: (info, marker) =>
+          configureClusterMarker(info, marker),
     );
   }
 
@@ -700,7 +722,9 @@ class MapController {
 
   Color _darkenColor(Color color, double amount) {
     final hsl = HSLColor.fromColor(color);
-    final adjusted = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    final adjusted = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
+    );
     return adjusted.toColor();
   }
 
@@ -746,7 +770,8 @@ class MapController {
         AppLogger.info('포트홀 데이터 null 여부: ${marker.potholeData == null}');
 
         // 개별 포트홀 마커인 경우만 처리
-        if (marker.type == PotholeMarkerType.individual && marker.potholeData != null) {
+        if (marker.type == PotholeMarkerType.individual &&
+            marker.potholeData != null) {
           final pothole = marker.potholeData!;
           AppLogger.info('포트홀 데이터 처리 시작: ${pothole.id}');
 
@@ -785,19 +810,22 @@ class MapController {
           // Context가 여전히 유효한지 확인
           if (context.mounted) {
             // 상세 정보 bottom sheet 표시
-            PotholeDetailBottomSheet.show(context, potholeInfo).then((_) {
-              AppLogger.info('Bottom sheet 표시 완료');
-            }).catchError((error) {
-              AppLogger.error('Bottom sheet 표시 실패', error: error);
-              // 사용자에게 알림 (옵션)
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   const SnackBar(content: Text('포트홀 상세 정보를 불러올 수 없습니다')),
-              // );
-            });
+            PotholeDetailBottomSheet.show(context, potholeInfo)
+                .then((_) {
+                  AppLogger.info('Bottom sheet 표시 완료');
+                })
+                .catchError((error) {
+                  AppLogger.error('Bottom sheet 표시 실패', error: error);
+                  // 사용자에게 알림 (옵션)
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   const SnackBar(content: Text('포트홀 상세 정보를 불러올 수 없습니다')),
+                  // );
+                });
           } else {
             AppLogger.error('Context가 더 이상 유효하지 않음 (mounted = false)');
           }
-        } else if (marker.type == PotholeMarkerType.cluster && marker.clusterData != null) {
+        } else if (marker.type == PotholeMarkerType.cluster &&
+            marker.clusterData != null) {
           AppLogger.info('클러스터 마커 클릭 - 목록 페이지로 이동');
           // 클러스터 마커인 경우 목록 페이지로 이동
           if (context.mounted) {
@@ -885,22 +913,32 @@ class MapController {
       // 1. pothole_data.json 파일 로드 시도
       try {
         AppLogger.info('JSON 파일 로딩 시도: assets/data/pothole_data.json');
-        final response1 = await rootBundle.loadString('assets/data/pothole_data.json');
+        final response1 = await rootBundle.loadString(
+          'assets/data/pothole_data.json',
+        );
         AppLogger.info('pothole_data.json 로딩 성공, 길이: ${response1.length}');
 
         final data1 = json.decode(response1);
         if (data1 is List) {
-          AppLogger.info('pothole_data.json: 배열 형태의 포트홀 데이터 ${data1.length}개 발견');
+          AppLogger.info(
+            'pothole_data.json: 배열 형태의 포트홀 데이터 ${data1.length}개 발견',
+          );
           for (int i = 0; i < data1.length; i++) {
             try {
               final potholeData = data1[i];
               final pothole = PotholeData(
                 id: potholeData['id']?.toString() ?? 'pothole_data_$i',
                 latitude: (potholeData['latitude'] ?? 0.0).toDouble(),
-                longitude: (potholeData['langitude'] ?? potholeData['longitude'] ?? 0.0).toDouble(),
+                longitude:
+                    (potholeData['langitude'] ??
+                            potholeData['longitude'] ??
+                            0.0)
+                        .toDouble(),
                 riskLevel: PotholeRiskLevel.high,
                 description: potholeData['description'] ?? '',
-                reportedAt: DateTime.tryParse(potholeData['createdAt'] ?? '') ?? DateTime.now(),
+                reportedAt:
+                    DateTime.tryParse(potholeData['createdAt'] ?? '') ??
+                    DateTime.now(),
                 status: (potholeData['status'] ?? potholeData['size'] ?? 'high')
                     .toString()
                     .toLowerCase(),
@@ -909,7 +947,10 @@ class MapController {
               allMarkers.add(PotholeMarker.individual(pothole));
               AppLogger.info('pothole_data.json에서 포트홀 ${pothole.id} 파싱 완료');
             } catch (e) {
-              AppLogger.error('pothole_data.json 포트홀 데이터 파싱 실패: ${data1[i]}', error: e);
+              AppLogger.error(
+                'pothole_data.json 포트홀 데이터 파싱 실패: ${data1[i]}',
+                error: e,
+              );
             }
           }
         }
@@ -920,12 +961,16 @@ class MapController {
       // 2. potholes.json 파일 로드 시도
       try {
         AppLogger.info('JSON 파일 로딩 시도: assets/data/potholes.json');
-        final response2 = await rootBundle.loadString('assets/data/potholes.json');
+        final response2 = await rootBundle.loadString(
+          'assets/data/potholes.json',
+        );
         AppLogger.info('potholes.json 로딩 성공, 길이: ${response2.length}');
 
         final data2 = json.decode(response2);
         if (data2 is Map<String, dynamic>) {
-          AppLogger.info('potholes.json: 객체 형태의 JSON 데이터, 키들: ${data2.keys.toList()}');
+          AppLogger.info(
+            'potholes.json: 객체 형태의 JSON 데이터, 키들: ${data2.keys.toList()}',
+          );
 
           // 개별 포트홀 데이터 파싱
           if (data2['potholes'] != null) {
@@ -938,7 +983,10 @@ class MapController {
                 allMarkers.add(PotholeMarker.individual(pothole));
                 AppLogger.info('potholes.json에서 포트홀 ${pothole.id} 파싱 완료');
               } catch (e) {
-                AppLogger.error('potholes.json 포트홀 데이터 파싱 실패: $potholeJson', error: e);
+                AppLogger.error(
+                  'potholes.json 포트홀 데이터 파싱 실패: $potholeJson',
+                  error: e,
+                );
               }
             }
           }
@@ -954,7 +1002,10 @@ class MapController {
                 allMarkers.add(PotholeMarker.cluster(cluster));
                 AppLogger.info('potholes.json에서 클러스터 ${cluster.id} 파싱 완료');
               } catch (e) {
-                AppLogger.error('potholes.json 클러스터 데이터 파싱 실패: $clusterJson', error: e);
+                AppLogger.error(
+                  'potholes.json 클러스터 데이터 파싱 실패: $clusterJson',
+                  error: e,
+                );
               }
             }
           }
@@ -1083,7 +1134,9 @@ class MapController {
           longitude: currentPos.longitude - 0.0015,
           riskLevel: PotholeRiskLevel.medium,
           description: '도로면 손상, 보수 작업 예정',
-          reportedAt: DateTime.now().subtract(const Duration(days: 1, hours: 12)),
+          reportedAt: DateTime.now().subtract(
+            const Duration(days: 1, hours: 12),
+          ),
           status: 'medium',
           complaintId: 'MED-1002',
         ),

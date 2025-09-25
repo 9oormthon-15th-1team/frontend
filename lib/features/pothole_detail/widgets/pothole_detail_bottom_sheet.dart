@@ -97,6 +97,9 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
                     _buildAddressCard(),
                     const SizedBox(height: 12),
                     _buildDescriptionCard(),
+                    _buildConditionalComplaintNumber(),
+                    const SizedBox(height: 20),
+                    _buildConditionalButtons(),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -149,21 +152,18 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
       ),
     ];
 
-    rows
-      ..add(const SizedBox(height: 6))
-      ..add(
-        buildRow(
-          '민원번호',
-          (info.complaintId == null || info.complaintId!.isEmpty)
-              ? '정보 없음'
-              : info.complaintId!,
-        ),
-      );
+    // rows
+    //   ..add(const SizedBox(height: 6))
+    //   ..add(
+    //     buildRow(
+    //       '민원번호',
+    //       (info.complaintId == null || info.complaintId!.isEmpty)
+    //           ? '정보 없음'
+    //           : info.complaintId!,
+    //     ),
+    //   );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rows,
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 
   Widget _buildImageSection(BuildContext context) {
@@ -187,7 +187,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
-              aspectRatio: 4 / 3,
+              aspectRatio: 16 / 9,
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _images.length,
@@ -212,7 +212,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: AspectRatio(
-                      aspectRatio: 4 / 3,
+                      aspectRatio: 16 / 9,
                       child: _buildImageCard(context, _images[i], i),
                     ),
                   ),
@@ -430,6 +430,102 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 조건부 민원번호 표시
+  Widget _buildConditionalComplaintNumber() {
+    final isInProgress = widget.potholeInfo.status == 'in_progress';
+    final complaintId = widget.potholeInfo.complaintId?.isNotEmpty == true
+        ? widget.potholeInfo.complaintId!
+        : null;
+
+    if (isInProgress && complaintId != null) {
+      return Column(
+        children: [
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '민원번호: $complaintId',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  /// 조건부 버튼들
+  Widget _buildConditionalButtons() {
+    final isInProgress = widget.potholeInfo.status == 'in_progress';
+
+    if (isInProgress) {
+      // 처리중일 때는 "처리중" 버튼만 표시
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: null, // 비활성화
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.grey,
+            disabledForegroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 18),
+          ),
+          child: const Text(
+            '처리중',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    } else {
+      // 처리중이 아닐 때는 "나도 봤수다!" 버튼 표시
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _onVoteButtonPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFF5722), // 주황색
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 18),
+          ),
+          child: const Text(
+            '나도 봤수다!',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  /// 투표 버튼 클릭 처리
+  void _onVoteButtonPressed() {
+    // 투표 기능 구현
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('투표가 등록되었습니다'),
+        duration: Duration(seconds: 2),
       ),
     );
   }

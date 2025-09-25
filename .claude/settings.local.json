@@ -12,7 +12,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(flutter:*)"
+      "Bash(flutter:*)",
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_i5WR9i/**)",
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_Nc1GGP/**)",
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_MwWXwk/**)",
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_r6peny/**)"
     ],
     "deny": [],
     "ask": []
