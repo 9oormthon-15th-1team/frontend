@@ -7,7 +7,6 @@ import 'package:geocoding/geocoding.dart';
 
 import '../../core/services/logging/app_logger.dart';
 import 'models/pothole_marker.dart';
-import 'widgets/pothole_marker_widget.dart';
 
 /// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
 class MapController {

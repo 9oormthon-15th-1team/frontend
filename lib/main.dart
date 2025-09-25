@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_naver_map/flutter_naver_map.dart';
-
-import 'core/constants/api_keys.dart';
 import 'core/constants/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/services/debug/debug_helper.dart';
 import 'core/services/logging/app_logger.dart';
 import 'core/theme/design_system.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'core/constants/api_keys.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -19,21 +18,21 @@ void main() async {
   AppConfig.logAppInfo();
 
   // Initialize Naver Map
-  // await FlutterNaverMap().init(
-  //   clientId: ApiKeys.naverMapClientId,
-  //   onAuthFailed: (ex) {
-  //     switch (ex) {
-  //       case NQuotaExceededException(:final message):
-  //         AppLogger.error("네이버 맵 사용량 초과", error: "message: $message");
-  //         break;
-  //       case NUnauthorizedClientException() ||
-  //           NClientUnspecifiedException() ||
-  //           NAnotherAuthFailedException():
-  //         AppLogger.error("네이버 맵 인증 실패", error: ex);
-  //         break;
-  //     }
-  //   },
-  // );
+  await FlutterNaverMap().init(
+    clientId: ApiKeys.naverMapClientId,
+    onAuthFailed: (ex) {
+      switch (ex) {
+        case NQuotaExceededException(:final message):
+          AppLogger.error("네이버 맵 사용량 초과", error: "message: $message");
+          break;
+        case NUnauthorizedClientException() ||
+            NClientUnspecifiedException() ||
+            NAnotherAuthFailedException():
+          AppLogger.error("네이버 맵 인증 실패", error: ex);
+          break;
+      }
+    },
+  );
 
   runApp(const MyApp());
 }

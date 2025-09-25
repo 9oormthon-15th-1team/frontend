@@ -5,7 +5,9 @@
       "Bash(mkdir:*)",
       "Bash(flutter run:*)",
       "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_H7BLeh/**)",
-      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_RzXlA6/**)"
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_RzXlA6/**)",
+      "Bash(git stash:*)",
+      "Bash(flutter analyze:*)"
     ],
     "deny": [],
     "ask": []

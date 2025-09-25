@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'lib/core/theme/tokens/app_colors.dart';
-import 'lib/core/theme/tokens/app_typography.dart';
 
 void main() {
   runApp(const DesignSystemExampleApp());

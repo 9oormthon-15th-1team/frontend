@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../core/constants/app_config.dart';
-import '../../core/services/debug/debug_helper.dart';
 import '../../core/services/logging/app_logger.dart';
 import 'map_controller.dart';
 import 'widgets/pothole_report_bottom_sheet.dart';
