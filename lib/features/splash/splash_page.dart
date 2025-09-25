@@ -17,7 +17,7 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
     _initializeAnimation();
-    _navigateToHome();
+    _navigateToOnboarding();
   }
 
   void _initializeAnimation() {
@@ -37,10 +37,10 @@ class _SplashPageState extends State<SplashPage>
     _controller.forward();
   }
 
-  void _navigateToHome() {
+  void _navigateToOnboarding() {
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        context.go('/home');
+        context.go('/onboarding');
       }
     });
   }

@@ -33,7 +33,9 @@ class SettingsService {
   // SharedPreferences 인스턴스 getter
   static SharedPreferences get prefs {
     if (_prefs == null) {
-      throw Exception('SettingsService not initialized. Call initialize() first.');
+      throw Exception(
+        'SettingsService not initialized. Call initialize() first.',
+      );
     }
     return _prefs!;
   }

@@ -4,6 +4,7 @@ import 'package:frontend/features/potholes/pothole_list_page.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/splash/splash_page.dart';
+import '../../features/onboarding/onboarding_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/gallery/gallery_page.dart';
 import '../../features/settings/settings_page.dart';
@@ -21,6 +22,13 @@ class AppRouter {
         path: '/splash',
         name: 'splash',
         builder: (context, state) => const SplashPage(),
+      ),
+
+      // Onboarding route (no bottom navigation)
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingPage(),
       ),
 
       // Main shell with bottom navigation
