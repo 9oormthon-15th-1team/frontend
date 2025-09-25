@@ -1,9 +1,10 @@
+import 'pothole_status.dart';
+
 class Pothole {
   final int id;
   final double latitude;
   final double longitude;
-  final String severity;
-  final String status;
+  final PotholeStatus status;
   final DateTime createdAt;
   final String? description;
   final String? address;
@@ -13,7 +14,6 @@ class Pothole {
     required this.id,
     required this.latitude,
     required this.longitude,
-    required this.severity,
     required this.status,
     required this.createdAt,
     this.description,
@@ -26,14 +26,12 @@ class Pothole {
       id: json['id'] ?? 0,
       latitude: (json['latitude'] ?? 0.0).toDouble(),
       longitude: (json['longitude'] ?? 0.0).toDouble(),
-      severity: json['severity'] ?? 'unknown',
-      status: json['status'] ?? 'pending',
+      status: PotholeStatus.fromServerValue(json['markerStatus']),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
-      description: json['description'],
       address: json['address'],
-      aiSummary: json['ai_summary'],
+      aiSummary: json['description'],
     );
   }
 
@@ -42,12 +40,10 @@ class Pothole {
       'id': id,
       'latitude': latitude,
       'longitude': longitude,
-      'severity': severity,
-      'status': status,
+      'markerStatus': status.toServerValue(),
       'created_at': createdAt.toIso8601String(),
-      'description': description,
       'address': address,
-      'ai_summary': aiSummary,
+      'ai_summary': description,
     };
   }
 }
