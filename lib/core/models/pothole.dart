@@ -9,6 +9,7 @@ class Pothole {
   final String? description;
   final String? address;
   final String? aiSummary;
+  final String? complaintId;
 
   Pothole({
     required this.id,
@@ -19,6 +20,7 @@ class Pothole {
     this.description,
     this.address,
     this.aiSummary,
+    this.complaintId,
   });
 
   factory Pothole.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Pothole {
           : DateTime.now(),
       address: json['address'],
       aiSummary: json['description'],
+      complaintId: json['complaintId'],
     );
   }
 
@@ -44,6 +47,7 @@ class Pothole {
       'created_at': createdAt.toIso8601String(),
       'address': address,
       'ai_summary': description,
+      'complaintId': complaintId,
     };
   }
 }

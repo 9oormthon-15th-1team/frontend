@@ -1,4 +1,5 @@
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:frontend/core/models/pothole_status.dart';
 
 /// 포트홀 마커 타입
 enum PotholeMarkerType {
@@ -24,7 +25,7 @@ class PotholeData {
   final String description;
   final DateTime reportedAt;
   final String? imageUrl;
-  final String status;
+  final PotholeStatus status;
   final String? complaintId;
 
   const PotholeData({
@@ -35,7 +36,8 @@ class PotholeData {
     required this.description,
     required this.reportedAt,
     this.imageUrl,
-    this.status = 'medium',
+    // FIXME: 기본값 임시 설정
+    this.status = PotholeStatus.caution,
     this.complaintId,
   });
 
@@ -54,9 +56,7 @@ class PotholeData {
       description: json['description'] as String,
       reportedAt: DateTime.parse(json['reportedAt'] as String),
       imageUrl: json['imageUrl'] as String?,
-      status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
-          .toString()
-          .toLowerCase(),
+      status: PotholeStatus.fromServerValue(json['status']),
       complaintId: json['complaintId']?.toString(),
     );
   }
@@ -138,7 +138,7 @@ class PotholeMarker {
   }
 
   /// 상태(마커 이미지 매핑용)
-  String get status => potholeData?.status ?? 'medium';
+  PotholeStatus get status => potholeData?.status ?? PotholeStatus.caution;
 
   /// 표시할 숫자 (클러스터의 경우)
   int get count => clusterData?.count ?? 1;

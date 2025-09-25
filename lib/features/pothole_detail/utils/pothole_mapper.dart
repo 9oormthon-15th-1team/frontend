@@ -15,11 +15,10 @@ class PotholeMapper {
       createdAt: pothole.createdAt,
       images: [], // 기본적으로 빈 이미지 리스트
       status: pothole.status,
-      severity: pothole.severity,
       firstReportedAt: pothole.createdAt,
       latestReportedAt: pothole.createdAt,
       reportCount: 1,
-      complaintId: null,
+      complaintId: pothole.complaintId,
     );
   }
 
