@@ -49,16 +49,21 @@ class MapController {
 
   /// 특정 위치로 이동
   Future<void> moveToPosition(NLatLng position, {double zoom = 14}) async {
-    if (_mapController == null) return;
+    if (_mapController == null) {
+      AppLogger.warning('맵 컨트롤러가 준비되지 않음');
+      return;
+    }
 
     try {
+      // 애니메이션과 함께 카메라 이동
       final cameraUpdate = NCameraUpdate.scrollAndZoomTo(
         target: position,
         zoom: zoom,
-      );
+      )..setAnimation(animation: NCameraAnimation.easing, duration: const Duration(milliseconds: 1000));
+
       await _mapController!.updateCamera(cameraUpdate);
       _currentPosition.value = position;
-      AppLogger.info('맵 위치 이동: ${position.latitude}, ${position.longitude}');
+      AppLogger.info('맵 위치 이동 완료: ${position.latitude}, ${position.longitude}, zoom: $zoom');
     } catch (e) {
       AppLogger.error('맵 위치 이동 실패', error: e);
     }
@@ -184,7 +189,7 @@ class MapController {
 
         // 맵이 준비되었다면 현재 위치로 이동 (선택적)
         if (_mapController != null && moveMap) {
-          await moveToPosition(currentLatLng);
+          await moveToPosition(currentLatLng, zoom: 16); // 더 높은 줌 레벨로 설정
           await addCurrentLocationMarker();
         } else if (_mapController != null) {
           // 맵을 이동하지 않더라도 마커는 업데이트

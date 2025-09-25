@@ -2,6 +2,14 @@
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Camera and gallery permissions -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- Camera feature (optional but recommended) -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:label="frontend"
         android:name="${applicationName}"

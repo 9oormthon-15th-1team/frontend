@@ -52,6 +52,9 @@ dependencies:
   # HTTP client
   http: ^1.2.2
 
+  # Image picker for camera and gallery
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
