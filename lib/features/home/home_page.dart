@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,22 +48,37 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        title: const Text('네이버 맵'),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        title: Container(), // 빈 타이틀
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => context.push('/settings'),
-            tooltip: 'Settings',
-          ),
           if (AppConfig.enableDebugTools)
-            IconButton(
-              icon: const Icon(Icons.bug_report),
-              onPressed: () => DebugHelper.logDeviceInfo(context),
-              tooltip: 'Log Device Info',
+            Container(
+              margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.bug_report, color: Colors.orange),
+                onPressed: () => DebugHelper.logDeviceInfo(context),
+                tooltip: 'Debug Info',
+              ),
             ),
         ],
       ),
@@ -74,31 +90,38 @@ class _HomePageState extends State<HomePage> {
           else
             _buildLoadingView(),
 
+          // 상단 위치 표시 카드
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 16,
+            right: 80,
+            child: _buildTopLocationCard(),
+          ),
+
           // 현재 위치 버튼
           Positioned(
-            top: 16,
+            top: MediaQuery.of(context).padding.top + 70,
             right: 16,
             child: _buildCurrentLocationButton(),
           ),
 
           // 확대/축소 버튼
           Positioned(
-            top: 80,
+            top: MediaQuery.of(context).padding.top + 130,
             right: 16,
             child: _buildZoomButtons(),
           ),
 
-          // 하단 주소 표시 카드만 유지
+          // 우하단 플로팅 버튼
           Positioned(
-            bottom: 16,
-            left: 16,
+            bottom: 100,
             right: 16,
-            child: _buildLocationCard(),
+            child: _buildFloatingActionButton(),
           ),
         ],
       ),
-      // 하단 네비게이션 또는 빠른 이동 버튼
-      bottomNavigationBar: _buildQuickLocationBar(),
+      // 하단 네비게이션 탭
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -148,6 +171,47 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTopLocationCard() {
+    return ValueListenableBuilder<String>(
+      valueListenable: _mapController.currentAddressNotifier,
+      builder: (context, address, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.location_on, color: Colors.orange, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  address,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -332,42 +396,69 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildQuickLocationBar() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _mapController.isMapReadyNotifier,
-      builder: (context, isReady, child) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildLocationButton('시청', Icons.account_balance,
-                isReady ? _mapController.moveToSeoulCityHall : null),
-              _buildLocationButton('강남', Icons.train,
-                isReady ? _mapController.moveToGangnam : null),
-              _buildLocationButton('홍대', Icons.nightlife,
-                isReady ? _mapController.moveToHongdae : null),
-            ],
-          ),
-        );
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: () {
+        // 포트홀 신고 기능 (추후 구현)
       },
+      backgroundColor: Colors.orange,
+      child: const Icon(Icons.add, color: Colors.white, size: 28),
     );
   }
 
-  Widget _buildLocationButton(String label, IconData icon, VoidCallback? onPressed) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed: onPressed,
-          icon: Icon(icon),
-          iconSize: 28,
-        ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildBottomNavItem('지도', Icons.map, true),
+          _buildBottomNavItem('목록', Icons.list, false),
+          _buildBottomNavItem('설정', Icons.settings, false),
+        ],
+      ),
     );
   }
+
+  Widget _buildBottomNavItem(String label, IconData icon, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        if (label == '설정') {
+          context.push('/settings');
+        }
+        // 다른 탭 기능은 추후 구현
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? Colors.orange : Colors.grey,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? Colors.orange : Colors.grey,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
