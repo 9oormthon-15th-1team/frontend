@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/models/pothole.dart';
+import 'package:frontend/features/potholes/pothole_list_page.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/splash/splash_page.dart';
@@ -24,6 +26,12 @@ class AppRouter {
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomePage(),
+      ),
+
+      GoRoute(
+        path: '/pothole',
+        name: 'pothole',
+        builder: (context, state) => const PotholeListPage(),
       ),
 
       // Settings route

@@ -47,6 +47,9 @@ dependencies:
   # Naver Map
   flutter_naver_map: ^1.2.4
 
+  # HTTP client
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
