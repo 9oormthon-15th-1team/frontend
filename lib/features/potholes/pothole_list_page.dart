@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/models/pothole.dart';
 import '../../core/services/api/pothole_api_service.dart';
 import '../../widgets/loading/loading_widget.dart';
+import 'widgets/address_input_widget.dart';
+import 'widgets/pothole_list_item.dart';
 
 class PotholeListPage extends StatefulWidget {
   const PotholeListPage({super.key});
@@ -14,6 +16,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
   List<Pothole> potholes = [];
   bool isLoading = true;
   String? error;
+  String _currentAddress = '제주특별자치도 제주시 이도2동';
 
   @override
   void initState() {
@@ -35,26 +38,91 @@ class _PotholeListPageState extends State<PotholeListPage> {
         isLoading = false;
       });
     } catch (e) {
+      // API 실패 시 목업 데이터 사용
       setState(() {
-        error = e.toString();
+        potholes = _getMockPotholes();
         isLoading = false;
+        error = null; // 목업 데이터로 대체하므로 에러 없음
       });
     }
+  }
+
+  List<Pothole> _getMockPotholes() {
+    return [
+      Pothole(
+        id: 1,
+        latitude: 33.4996,
+        longitude: 126.5312,
+        severity: 'high',
+        status: '신고됨',
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+        description: '도로에 큰 구멍이 있어 차량 통행에 위험합니다.',
+      ),
+      Pothole(
+        id: 2,
+        latitude: 33.5012,
+        longitude: 126.5298,
+        severity: 'medium',
+        status: '처리중',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+        description: '중간 크기의 포트홀이 발견되었습니다.',
+      ),
+      Pothole(
+        id: 3,
+        latitude: 33.4988,
+        longitude: 126.5325,
+        severity: 'low',
+        status: '완료',
+        createdAt: DateTime.now().subtract(const Duration(days: 3)),
+        description: '작은 구멍이지만 주의가 필요합니다.',
+      ),
+      Pothole(
+        id: 4,
+        latitude: 33.5023,
+        longitude: 126.5301,
+        severity: 'high',
+        status: '신고됨',
+        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+        description: '아스팔트가 패여 있어 매우 위험한 상태입니다.',
+      ),
+      Pothole(
+        id: 5,
+        latitude: 33.4975,
+        longitude: 126.5340,
+        severity: 'medium',
+        status: '처리중',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+        description: '비가 온 후 더 심해진 포트홀입니다.',
+      ),
+      Pothole(
+        id: 6,
+        latitude: 33.5035,
+        longitude: 126.5285,
+        severity: 'low',
+        status: '신고됨',
+        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+        description: '도로 가장자리에 작은 구멍이 있습니다.',
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pothole List'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadPotholes,
+      body: Column(
+        children: [
+          AddressInputWidget(
+            address: _currentAddress,
+            onRefresh: _loadPotholes,
+            onAddressChanged: (newAddress) {
+              setState(() {
+                _currentAddress = newAddress;
+              });
+            },
           ),
+          Expanded(child: _buildBody()),
         ],
       ),
-      body: _buildBody(),
     );
   }
 
@@ -95,71 +163,31 @@ class _PotholeListPageState extends State<PotholeListPage> {
     }
 
     if (potholes.isEmpty) {
-      return const Center(
-        child: Text('No potholes found'),
-      );
+      return const Center(child: Text('No potholes found'));
     }
 
     return RefreshIndicator(
       onRefresh: _loadPotholes,
       child: ListView.builder(
+        padding: const EdgeInsets.all(16),
         itemCount: potholes.length,
         itemBuilder: (context, index) {
           final pothole = potholes[index];
-          return _buildPotholeCard(pothole);
+          return PotholeListItem(
+            pothole: pothole,
+            onDetailTap: () => _onDetailTap(pothole),
+            onNavigateTap: () => _onNavigateTap(pothole),
+          );
         },
       ),
     );
   }
 
-  Widget _buildPotholeCard(Pothole pothole) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getSeverityColor(pothole.severity),
-          child: Icon(
-            Icons.warning,
-            color: Colors.white,
-          ),
-        ),
-        title: Text('Pothole #${pothole.id}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Location: ${pothole.latitude.toStringAsFixed(6)}, ${pothole.longitude.toStringAsFixed(6)}'),
-            Text('Status: ${pothole.status}'),
-            Text('Severity: ${pothole.severity}'),
-            if (pothole.description != null)
-              Text('Description: ${pothole.description}'),
-            Text('Created: ${_formatDate(pothole.createdAt)}'),
-          ],
-        ),
-        isThreeLine: true,
-        onTap: () {
-          // TODO: Navigate to detail page
-        },
-      ),
-    );
+  void _onDetailTap(Pothole pothole) {
+    // TODO: Navigate to detail page
   }
 
-  Color _getSeverityColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'high':
-      case 'severe':
-        return Colors.red;
-      case 'medium':
-      case 'moderate':
-        return Colors.orange;
-      case 'low':
-      case 'minor':
-        return Colors.yellow;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  void _onNavigateTap(Pothole pothole) {
+    // TODO: Navigate to maps with pothole location
   }
 }

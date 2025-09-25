@@ -18,21 +18,21 @@ void main() async {
   AppConfig.logAppInfo();
 
   // Initialize Naver Map
-  await FlutterNaverMap().init(
-    clientId: ApiKeys.naverMapClientId,
-    onAuthFailed: (ex) {
-      switch (ex) {
-        case NQuotaExceededException(:final message):
-          AppLogger.error("네이버 맵 사용량 초과", error: "message: $message");
-          break;
-        case NUnauthorizedClientException() ||
-             NClientUnspecifiedException() ||
-             NAnotherAuthFailedException():
-          AppLogger.error("네이버 맵 인증 실패", error: ex);
-          break;
-      }
-    }
-  );
+  // await FlutterNaverMap().init(
+  //   clientId: ApiKeys.naverMapClientId,
+  //   onAuthFailed: (ex) {
+  //     switch (ex) {
+  //       case NQuotaExceededException(:final message):
+  //         AppLogger.error("네이버 맵 사용량 초과", error: "message: $message");
+  //         break;
+  //       case NUnauthorizedClientException() ||
+  //            NClientUnspecifiedException() ||
+  //            NAnotherAuthFailedException():
+  //         AppLogger.error("네이버 맵 인증 실패", error: ex);
+  //         break;
+  //     }
+  //   }
+  // );
 
   runApp(const MyApp());
 }

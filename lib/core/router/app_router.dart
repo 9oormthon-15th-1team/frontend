@@ -7,6 +7,7 @@ import '../../features/splash/splash_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../services/logging/app_logger.dart';
+import '../widgets/main_layout.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -14,31 +15,38 @@ class AppRouter {
     debugLogDiagnostics: true,
     observers: [RouterObserver()],
     routes: [
-      // Splash route
+      // Splash route (no bottom navigation)
       GoRoute(
         path: '/splash',
         name: 'splash',
         builder: (context, state) => const SplashPage(),
       ),
 
-      // Home route
-      GoRoute(
-        path: '/home',
-        name: 'home',
-        builder: (context, state) => const HomePage(),
-      ),
+      // Main shell with bottom navigation
+      ShellRoute(
+        builder: (context, state, child) => MainLayout(child: child),
+        routes: [
+          // Home route
+          GoRoute(
+            path: '/home',
+            name: 'home',
+            builder: (context, state) => const HomePage(),
+          ),
 
-      GoRoute(
-        path: '/pothole',
-        name: 'pothole',
-        builder: (context, state) => const PotholeListPage(),
-      ),
+          // Pothole list route
+          GoRoute(
+            path: '/pothole',
+            name: 'pothole',
+            builder: (context, state) => const PotholeListPage(),
+          ),
 
-      // Settings route
-      GoRoute(
-        path: '/settings',
-        name: 'settings',
-        builder: (context, state) => const SettingsPage(),
+          // Settings route
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsPage(),
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => ErrorPage(error: state.error),

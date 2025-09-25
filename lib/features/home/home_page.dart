@@ -120,8 +120,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      // 하단 네비게이션 탭
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -406,59 +404,5 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildBottomNavItem('지도', Icons.map, true),
-          _buildBottomNavItem('목록', Icons.list, false),
-          _buildBottomNavItem('설정', Icons.settings, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavItem(String label, IconData icon, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        if (label == '설정') {
-          context.push('/settings');
-        }
-        // 다른 탭 기능은 추후 구현
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? Colors.orange : Colors.grey,
-            size: 24,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isSelected ? Colors.orange : Colors.grey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
 }
