@@ -20,17 +20,13 @@ class OnboardingContent extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon/Image placeholder
-            Container(
-              width: 250,
-              height: 250,
-
-              child: ClipRRect(
+            SizedBox.square(
+              dimension: data.imageDimension ?? 260,
+              child: FittedBox(
+                fit: BoxFit.contain,
                 child: Image.asset(
                   data.imagePath,
-                  width: 250,
-                  height: 250,
-                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
                 ),
               ),
             ),

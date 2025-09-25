@@ -67,6 +67,9 @@ dependencies:
   # Internationalization
   intl: ^0.19.0
 
+  # Animations
+  lottie: ^3.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -77,6 +80,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -95,6 +99,7 @@ flutter:
     - assets/data/
     - assets/svg/
     - assets/png/
+    - assets/splash/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -116,6 +121,12 @@ flutter:
           weight: 400
         - asset: assets/fonts/KakaoSmallSans-Bold.ttf
           weight: 600
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: assets/logo/logo.png
+  image_path_ios: assets/logo/logo.svg
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

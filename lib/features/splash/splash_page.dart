@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -29,10 +30,7 @@ class _SplashPageState extends State<SplashPage>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
   }
@@ -53,41 +51,36 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.secondary;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Colors.white,
       body: Center(
-        child: AnimatedBuilder(
-          animation: _fadeAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _fadeAnimation.value,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.flutter_dash,
-                    size: 100,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Frontend App',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading...',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                  ),
-                ],
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 600,
+                height: 600,
+                child: Lottie.asset(
+                  'assets/splash/splash_moving.json',
+                  fit: BoxFit.contain,
+                ),
               ),
-            );
-          },
+              const SizedBox(height: 14),
+              Text(
+                '포트홀 인 제주',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                      color: accentColor,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'KakaoSmallSans',
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );

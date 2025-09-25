@@ -312,10 +312,12 @@ class OnboardingData {
   final String title;
   final String description;
   final String imagePath;
+  final double? imageDimension;
 
   OnboardingData({
     required this.title,
     required this.description,
     required this.imagePath,
+    this.imageDimension,
   });
 }
