@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/splash/splash_page.dart';
 import '../../features/home/home_page.dart';
+import '../../features/gallery/gallery_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../services/logging/app_logger.dart';
 import '../widgets/main_layout.dart';
@@ -38,6 +39,13 @@ class AppRouter {
             path: '/pothole',
             name: 'pothole',
             builder: (context, state) => const PotholeListPage(),
+          ),
+
+          // Gallery route
+          GoRoute(
+            path: '/gallery',
+            name: 'gallery',
+            builder: (context, state) => const GalleryPage(),
           ),
 
           // Settings route
