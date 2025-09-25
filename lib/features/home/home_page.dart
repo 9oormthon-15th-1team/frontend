@@ -73,8 +73,10 @@ class _HomePageState extends State<HomePage>
     try {
       // JSON 파일에서 포트홀 데이터 로드
       final markers = await _mapController.loadPotholeMarkersFromJson();
-      await _mapController.addPotholeMarkers(markers);
-      AppLogger.info('포트홀 마커 로드 완료');
+      if (mounted) {
+        await _mapController.addPotholeMarkers(markers, context: context);
+        AppLogger.info('포트홀 마커 로드 완료');
+      }
     } catch (e) {
       AppLogger.error('포트홀 마커 로드 실패', error: e);
     }

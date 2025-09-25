@@ -4,8 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/services/logging/app_logger.dart';
+import '../pothole_detail/models/pothole_info.dart';
+import '../pothole_detail/widgets/pothole_detail_bottom_sheet.dart';
 import 'models/pothole_marker.dart';
 
 /// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
@@ -25,6 +28,9 @@ class MapController {
   // 포트홀 마커 관리
   final List<PotholeMarker> _potholeMarkers = [];
   final Map<String, NMarker> _activeMarkers = {};
+
+  // BuildContext 참조 (bottom sheet 표시용)
+  BuildContext? _buildContext;
 
   /// 맵 준비 상태 notifier
   ValueNotifier<bool> get isMapReadyNotifier => _isMapReady;
@@ -431,10 +437,15 @@ class MapController {
   }
 
   /// 포트홀 마커 추가
-  Future<void> addPotholeMarkers(List<PotholeMarker> markers) async {
+  Future<void> addPotholeMarkers(List<PotholeMarker> markers, {BuildContext? context}) async {
     if (markers.isEmpty) {
       AppLogger.info('추가할 포트홀 마커가 없음');
       return;
+    }
+
+    // BuildContext 저장
+    if (context != null) {
+      _buildContext = context;
     }
 
     AppLogger.info('포트홀 마커 저장: ${markers.length}개');
@@ -481,7 +492,7 @@ class MapController {
 
         for (final marker in batch) {
           try {
-            await _addSinglePotholeMarker(marker);
+            await _addSinglePotholeMarker(marker, context: _buildContext);
             successCount++;
           } catch (e) {
             AppLogger.error('개별 포트홀 마커 추가 실패: ${marker.id}', error: e);
@@ -542,6 +553,13 @@ class MapController {
             : NMarker.defaultAnchor, // 기본 마커는 기본 앵커 사용
         icon: icon,
       );
+
+      // 마커 클릭 이벤트 추가
+      nMarker.setOnTapListener((overlay) {
+        if (context != null) {
+          _onPotholeMarkerTapped(marker);
+        }
+      });
 
       if (marker.type == PotholeMarkerType.cluster || !hasCustomIcon) {
         Color markerColor;
@@ -612,7 +630,80 @@ class MapController {
   /// 포트홀 마커 클릭 처리
   void _onPotholeMarkerTapped(PotholeMarker marker) {
     AppLogger.info('포트홀 마커 클릭: ${marker.id}');
-    // TODO: 포트홀 상세 정보 표시 또는 bottom sheet 표시
+
+    try {
+      final context = _buildContext;
+      AppLogger.info('Context null 여부: ${context == null}');
+
+      if (context != null) {
+        AppLogger.info('마커 타입: ${marker.type}');
+        AppLogger.info('포트홀 데이터 null 여부: ${marker.potholeData == null}');
+
+        // 개별 포트홀 마커인 경우만 처리
+        if (marker.type == PotholeMarkerType.individual && marker.potholeData != null) {
+          final pothole = marker.potholeData!;
+          AppLogger.info('포트홀 데이터 처리 시작: ${pothole.id}');
+
+          // PotholeMarker를 PotholeInfo로 변환
+          final List<String> sampleImages = [
+            'assets/images/danger.png',
+            'assets/images/general.png',
+            'assets/images/waring.png',
+          ];
+
+          // 랜덤하게 1-3개의 이미지 선택
+          final random = DateTime.now().millisecond % 3;
+          final selectedImages = sampleImages.take(random + 1).toList();
+
+          final potholeInfo = PotholeInfo(
+            id: pothole.id,
+            title: '포트홀 신고 #${pothole.id}',
+            description: pothole.description.isNotEmpty
+                ? pothole.description
+                : '도로에 포트홀이 발견되었습니다. 안전에 위험할 수 있으므로 주의가 필요합니다.',
+            latitude: marker.position.latitude,
+            longitude: marker.position.longitude,
+            address: '제주특별시도 제주시 이도이동', // 임시 주소
+            createdAt: pothole.reportedAt,
+            images: selectedImages,
+            status: pothole.status,
+            severity: pothole.riskLevel.name,
+          );
+
+          AppLogger.info('PotholeInfo 생성 완료, bottom sheet 표시 시도');
+
+          // Context가 여전히 유효한지 확인
+          if (context.mounted) {
+            // 상세 정보 bottom sheet 표시
+            PotholeDetailBottomSheet.show(context, potholeInfo).then((_) {
+              AppLogger.info('Bottom sheet 표시 완료');
+            }).catchError((error) {
+              AppLogger.error('Bottom sheet 표시 실패', error: error);
+              // 사용자에게 알림 (옵션)
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   const SnackBar(content: Text('포트홀 상세 정보를 불러올 수 없습니다')),
+              // );
+            });
+          } else {
+            AppLogger.error('Context가 더 이상 유효하지 않음 (mounted = false)');
+          }
+        } else if (marker.type == PotholeMarkerType.cluster && marker.clusterData != null) {
+          AppLogger.info('클러스터 마커 클릭 - 목록 페이지로 이동');
+          // 클러스터 마커인 경우 목록 페이지로 이동
+          if (context.mounted) {
+            context.go('/pothole-list');
+          }
+        } else {
+          AppLogger.warning('처리할 수 없는 마커 타입 또는 데이터 없음');
+        }
+      } else {
+        AppLogger.error('Context가 null입니다 - Bottom sheet를 표시할 수 없습니다');
+        AppLogger.error('_buildContext 값: $_buildContext');
+        AppLogger.error('마커 ID: ${marker.id}, 타입: ${marker.type}');
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('포트홀 마커 클릭 처리 중 오류', error: e, stackTrace: stackTrace);
+    }
   }
 
   /// 포트홀 마커 제거

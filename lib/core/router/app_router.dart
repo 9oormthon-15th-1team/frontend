@@ -8,6 +8,7 @@ import '../../features/home/home_page.dart';
 import '../../features/gallery/gallery_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/pothole_report/screens/photo_selection_screen.dart';
+import '../../features/pothole_detail/screens/pothole_list_page.dart' as detail;
 import '../services/logging/app_logger.dart';
 import '../widgets/main_layout.dart';
 
@@ -61,6 +62,20 @@ class AppRouter {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+
+          // Photo selection route
+          GoRoute(
+            path: '/photo-selection',
+            name: 'photo-selection',
+            builder: (context, state) => const PhotoSelectionScreen(),
+          ),
+
+          // Pothole list route
+          GoRoute(
+            path: '/pothole-list',
+            name: 'pothole-list',
+            builder: (context, state) => const detail.PotholeListPage(),
           ),
         ],
       ),
