@@ -7,6 +7,7 @@ import '../../features/onboarding/onboarding_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/gallery/gallery_page.dart';
 import '../../features/settings/settings_page.dart';
+import '../../features/pothole_report/screens/photo_selection_screen.dart';
 import '../services/logging/app_logger.dart';
 import '../widgets/main_layout.dart';
 
@@ -60,6 +61,13 @@ class AppRouter {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+
+          // Photo selection route
+          GoRoute(
+            path: '/photo-selection',
+            name: 'photo-selection',
+            builder: (context, state) => const PhotoSelectionScreen(),
           ),
         ],
       ),

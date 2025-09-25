@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/design_system.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/logging/app_logger.dart';
@@ -211,7 +212,8 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
         ),
       );
 
-      // TODO: 포트홀 상세 정보 입력 페이지로 이동
+      // 포트홀 사진 선택 화면으로 이동
+      context.go('/photo-selection');
       AppLogger.info('다음 단계로 진행: ${_selectedImages.length}장의 사진 선택됨');
     }
   }
