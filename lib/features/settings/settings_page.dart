@@ -41,10 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(
         toolbarHeight: 56,
         titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+
         title: const Text(
           '설정',
           style: TextStyle(
@@ -160,10 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildDisplaySection() {
     return SettingsSection(
       children: [
-        SettingInfoTile(
-          title: '버전 정보',
-          value: '1.00',
-        ),
+        SettingInfoTile(title: '버전 정보', value: '1.00'),
         const Divider(
           height: 1,
           thickness: 0.5,

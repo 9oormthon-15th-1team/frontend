@@ -63,7 +63,8 @@ class _PotholeListPageState extends State<PotholeListPage> {
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         description: '도로에 큰 구멍이 있어 차량 통행에 위험합니다.',
         address: '제주시 건입동 건입동로 348',
-        aiSummary: 'AI가 분석한 결과, 차량 통행에 매우 위험한 큰 포트홀로 즉시 보수가 필요한 상태입니다. 우회 도로 이용을 권장합니다.',
+        aiSummary:
+            'AI가 분석한 결과, 차량 통행에 매우 위험한 큰 포트홀로 즉시 보수가 필요한 상태입니다. 우회 도로 이용을 권장합니다.',
       ),
       Pothole(
         id: 2,

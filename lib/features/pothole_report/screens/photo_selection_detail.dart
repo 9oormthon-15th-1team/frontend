@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 import '../../../core/services/logging/app_logger.dart';
 import '../models/photo_selection_state.dart';
@@ -412,36 +413,19 @@ class _PhotoSelectionDetailScreenState
     );
   }
 
-  /// 지도 컨테이너 구축
   Widget _buildMapContainer() {
-    return Container(
+    return SizedBox(
       height: 200,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[50],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Slot',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
+      child: NaverMap(
+        options: NaverMapViewOptions(
+          initialCameraPosition: NCameraPosition(
+            target: NLatLng(
+              _currentPosition?.latitude ?? 37.5665, // 기본 서울 좌표
+              _currentPosition?.longitude ?? 126.9780,
             ),
+            zoom: 15,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              _locationAddress,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
