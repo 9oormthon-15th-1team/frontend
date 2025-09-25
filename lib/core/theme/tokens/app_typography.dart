@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTypography {
-  static const String _fontFamily = 'KakaoSans';
+  static const String _fontFamily = 'KakaoSmallSans';
 
   // Title styles
   static const TextStyle titleLg = TextStyle(

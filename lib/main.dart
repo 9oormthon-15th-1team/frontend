@@ -48,6 +48,26 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: AppConfig.showDebugBanner,
       themeMode: ThemeMode.system,
       routerConfig: AppRouter.router,
+      theme: ThemeData(
+        fontFamily: 'KakaoSmallSans',
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(fontFamily: 'KakaoSmallSans'),
+          displayMedium: TextStyle(fontFamily: 'KakaoSmallSans'),
+          displaySmall: TextStyle(fontFamily: 'KakaoSmallSans'),
+          headlineLarge: TextStyle(fontFamily: 'KakaoSmallSans'),
+          headlineMedium: TextStyle(fontFamily: 'KakaoSmallSans'),
+          headlineSmall: TextStyle(fontFamily: 'KakaoSmallSans'),
+          titleLarge: TextStyle(fontFamily: 'KakaoSmallSans'),
+          titleMedium: TextStyle(fontFamily: 'KakaoSmallSans'),
+          titleSmall: TextStyle(fontFamily: 'KakaoSmallSans'),
+          bodyLarge: TextStyle(fontFamily: 'KakaoSmallSans'),
+          bodyMedium: TextStyle(fontFamily: 'KakaoSmallSans'),
+          bodySmall: TextStyle(fontFamily: 'KakaoSmallSans'),
+          labelLarge: TextStyle(fontFamily: 'KakaoSmallSans'),
+          labelMedium: TextStyle(fontFamily: 'KakaoSmallSans'),
+          labelSmall: TextStyle(fontFamily: 'KakaoSmallSans'),
+        ),
+      ),
     );
   }
 }

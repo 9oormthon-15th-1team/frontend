@@ -108,7 +108,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     onPressed: _startApp,
                     child: const Text(
                       'Skip',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                        fontFamily: 'KakaoSmallSans',
+                      ),
                     ),
                   ),
                 ],
@@ -159,6 +163,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             color: Colors.orange,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
+                            fontFamily: 'KakaoSmallSans',
                           ),
                         ),
                       ),
@@ -187,6 +192,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          fontFamily: 'KakaoSmallSans',
                         ),
                       ),
                     ),
@@ -295,6 +301,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'KakaoSmallSans',
               ),
             ),
           ],

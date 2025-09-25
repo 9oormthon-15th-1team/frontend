@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/design_system.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/logging/app_logger.dart';
@@ -8,7 +9,8 @@ class PotholeReportBottomSheet extends StatefulWidget {
   const PotholeReportBottomSheet({super.key});
 
   @override
-  State<PotholeReportBottomSheet> createState() => _PotholeReportBottomSheetState();
+  State<PotholeReportBottomSheet> createState() =>
+      _PotholeReportBottomSheetState();
 }
 
 class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
@@ -46,8 +48,9 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
               children: [
                 const Text(
                   '사진 촬영',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                  style: AppTypography.bodyDefaultBold,
+                  textAlign: TextAlign.center,
+                ), // 가운데 정렬
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
@@ -69,18 +72,14 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
               color: Colors.orange,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.camera_alt,
-              color: Colors.white,
-              size: 40,
-            ),
+            child: const Icon(Icons.camera_alt, color: Colors.white, size: 40),
           ),
 
           const SizedBox(height: 24),
 
           // 메인 텍스트
           const Text(
-            '포트홀 사진을 촬영해주세요',
+            '사진 촬영',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -91,12 +90,11 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
           const SizedBox(height: 12),
 
           // 서브 텍스트
-          const Text(
-            '포트홀이 잘 보이도록 촬영해주세요.\n여러 장 촬영하면 더 정확한 신고가 가능합니다.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-          ),
-
+          // const Text(
+          //   '포트홀이 잘 보이도록 촬영해주세요.\n여러 장 촬영하면 더 정확한 신고가 가능합니다.',
+          //   textAlign: TextAlign.center,
+          //   style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
+          // ),
           const Spacer(),
 
           // 버튼들

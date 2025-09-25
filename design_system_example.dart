@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'lib/core/theme/tokens/app_colors.dart';
 import 'lib/core/theme/tokens/app_typography.dart';
-import 'lib/core/theme/tokens/app_text_styles.dart';
 
 void main() {
   runApp(const DesignSystemExampleApp());
@@ -33,10 +32,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Design System Tokens',
-          style: AppTextStyles.titleMediumPrimary,
-        ),
+        title: Text('Design System Tokens'),
         centerTitle: true,
 
         elevation: 0,
@@ -66,7 +62,6 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Typography Examples', style: AppTextStyles.titleLargePrimary),
         const SizedBox(height: 16),
 
         Container(
@@ -80,41 +75,23 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Title Large (24px)',
-                style: AppTextStyles.titleLargePrimary,
-              ),
+              Text('Title Large (24px)'),
               const SizedBox(height: 8),
-              Text(
-                'Title Medium (20px)',
-                style: AppTextStyles.titleMediumPrimary,
-              ),
+              Text('Title Medium (20px)'),
               const SizedBox(height: 8),
-              Text(
-                'Title Small (18px)',
-                style: AppTextStyles.titleSmallPrimary,
-              ),
+              Text('Title Small (18px)'),
               const SizedBox(height: 8),
-              Text(
-                'Body Default Primary (16px)',
-                style: AppTextStyles.bodyDefaultPrimary,
-              ),
+              Text('Body Default Primary (16px)'),
               const SizedBox(height: 8),
-              Text(
-                'Body Default Secondary (16px)',
-                style: AppTextStyles.bodyDefaultSecondary,
-              ),
+              Text('Body Default Secondary (16px)'),
               const SizedBox(height: 8),
-              Text(
-                'Body Default Bold (16px)',
-                style: AppTextStyles.bodyDefaultBoldPrimary,
-              ),
+              Text('Body Default Bold (16px)'),
               const SizedBox(height: 8),
-              Text('Body Small (14px)', style: AppTextStyles.bodySmallPrimary),
+
               const SizedBox(height: 8),
-              Text('Caption (12px)', style: AppTextStyles.captionPrimary),
+
               const SizedBox(height: 16),
-              Text('Error Text Example', style: AppTextStyles.bodyDefaultError),
+
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -122,10 +99,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                   color: AppColors.primary.normal,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'Text on Primary Background',
-                  style: AppTextStyles.bodyDefaultOnPrimary,
-                ),
+                child: Text('Text on Primary Background'),
               ),
             ],
           ),
@@ -138,7 +112,6 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Color Palette', style: AppTextStyles.titleLargePrimary),
         const SizedBox(height: 16),
 
         // Orange Palette
@@ -171,7 +144,6 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$name Palette', style: AppTextStyles.titleSmallPrimary),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -201,11 +173,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTextStyles.captionSecondary,
-            textAlign: TextAlign.center,
-          ),
+          Text(label, textAlign: TextAlign.center),
         ],
       ),
     );
@@ -215,10 +183,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Basic UI Elements Using Tokens',
-          style: AppTextStyles.titleLargePrimary,
-        ),
+        Text('Basic UI Elements Using Tokens'),
         const SizedBox(height: 16),
 
         // Basic Buttons
@@ -233,7 +198,6 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Button Examples', style: AppTextStyles.titleSmallPrimary),
               const SizedBox(height: 12),
 
               // Primary Button
@@ -252,11 +216,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                       BoxShadow(blurRadius: 4, offset: const Offset(0, 2)),
                     ],
                   ),
-                  child: Text(
-                    'Primary Button',
-                    style: AppTextStyles.bodyDefaultBoldOnPrimary,
-                    textAlign: TextAlign.center,
-                  ),
+                  child: Text('Primary Button', textAlign: TextAlign.center),
                 ),
               ),
 
@@ -275,11 +235,7 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                     border: Border.all(color: AppColors.primary.normal),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    'Outlined Button',
-                    style: AppTextStyles.bodyDefaultBoldPrimary,
-                    textAlign: TextAlign.center,
-                  ),
+                  child: Text('Outlined Button', textAlign: TextAlign.center),
                 ),
               ),
 
@@ -322,13 +278,9 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Input Field Examples',
-                style: AppTextStyles.titleSmallPrimary,
-              ),
+              Text('Input Field Examples'),
               const SizedBox(height: 12),
 
-              Text('이메일', style: AppTextStyles.bodySmallPrimary),
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
@@ -339,15 +291,11 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  '이메일을 입력하세요',
-                  style: AppTextStyles.bodyDefaultSecondary,
-                ),
+                child: Text('이메일을 입력하세요'),
               ),
 
               const SizedBox(height: 16),
 
-              Text('에러 상태', style: AppTextStyles.bodySmallPrimary),
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
@@ -358,10 +306,8 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text('잘못된 입력', style: AppTextStyles.bodyDefaultPrimary),
               ),
               const SizedBox(height: 4),
-              Text('올바르지 않은 형식입니다', style: AppTextStyles.captionError),
             ],
           ),
         ),
@@ -385,12 +331,8 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('정보 알림', style: AppTextStyles.bodyDefaultBoldPrimary),
                     const SizedBox(height: 4),
-                    Text(
-                      '토큰을 사용한 알림 카드입니다.',
-                      style: AppTextStyles.bodySmallPrimary,
-                    ),
+                    Text('토큰을 사용한 알림 카드입니다.'),
                   ],
                 ),
               ),
@@ -416,12 +358,8 @@ class _DesignSystemExamplePageState extends State<DesignSystemExamplePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('오류 알림', style: AppTextStyles.bodyDefaultBoldError),
                     const SizedBox(height: 4),
-                    Text(
-                      '에러 토큰을 사용한 알림 카드입니다.',
-                      style: AppTextStyles.bodySmallSecondary,
-                    ),
+                    Text('에러 토큰을 사용한 알림 카드입니다.'),
                   ],
                 ),
               ),

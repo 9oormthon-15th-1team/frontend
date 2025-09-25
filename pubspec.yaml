@@ -84,6 +84,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/fonts/
     - assets/images/
     - assets/data/
     - assets/svg/
@@ -100,12 +101,14 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: KakaoSans
+    - family: KakaoSmallSans
       fonts:
-        - asset: assets/fonts/KakaoSans-Regular.ttf
+        - asset: assets/fonts/KakaoSmallSans-Light.ttf
+          weight: 200
+        - asset: assets/fonts/KakaoSmallSans-Regular.ttf
           weight: 400
-        - asset: assets/fonts/KakaoSans-Bold.ttf
+        - asset: assets/fonts/KakaoSmallSans-Bold.ttf
           weight: 600
-  #
+
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
