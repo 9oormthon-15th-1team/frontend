@@ -1,0 +1,140 @@
+{
+  "potholes": [
+    {
+      "id": "pothole_001",
+      "latitude": 37.5665,
+      "longitude": 126.9780,
+      "riskLevel": "high",
+      "description": "서울시청 앞 대형 포트홀",
+      "reportedAt": "2024-01-15T10:30:00Z",
+      "severity": 8.5,
+      "size": "large",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_002",
+      "latitude": 37.5663,
+      "longitude": 126.9785,
+      "riskLevel": "medium",
+      "description": "덕수궁 근처 중간 크기 포트홀",
+      "reportedAt": "2024-01-14T15:45:00Z",
+      "severity": 6.2,
+      "size": "medium",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_003",
+      "latitude": 37.5668,
+      "longitude": 126.9775,
+      "riskLevel": "low",
+      "description": "시청역 인근 작은 포트홀",
+      "reportedAt": "2024-01-16T08:20:00Z",
+      "severity": 3.8,
+      "size": "small",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_004",
+      "latitude": 37.5670,
+      "longitude": 126.9782,
+      "riskLevel": "high",
+      "description": "을지로입구 교차로 위험 포트홀",
+      "reportedAt": "2024-01-13T12:15:00Z",
+      "severity": 9.1,
+      "size": "large",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_005",
+      "latitude": 37.5661,
+      "longitude": 126.9788,
+      "riskLevel": "medium",
+      "description": "명동입구 인근 포트홀",
+      "reportedAt": "2024-01-17T14:30:00Z",
+      "severity": 5.7,
+      "size": "medium",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_006",
+      "latitude": 37.5672,
+      "longitude": 126.9773,
+      "riskLevel": "low",
+      "description": "종로1가 소형 포트홀",
+      "reportedAt": "2024-01-18T09:45:00Z",
+      "severity": 4.2,
+      "size": "small",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_007",
+      "latitude": 37.5659,
+      "longitude": 126.9790,
+      "riskLevel": "high",
+      "description": "회현역 앞 심각한 포트홀",
+      "reportedAt": "2024-01-12T16:20:00Z",
+      "severity": 8.8,
+      "size": "large",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_008",
+      "latitude": 37.5674,
+      "longitude": 126.9778,
+      "riskLevel": "medium",
+      "description": "종각역 인근 포트홀",
+      "reportedAt": "2024-01-19T11:10:00Z",
+      "severity": 6.5,
+      "size": "medium",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_009",
+      "latitude": 37.5657,
+      "longitude": 126.9783,
+      "riskLevel": "low",
+      "description": "남대문시장 입구 작은 포트홀",
+      "reportedAt": "2024-01-20T13:25:00Z",
+      "severity": 3.5,
+      "size": "small",
+      "status": "reported"
+    },
+    {
+      "id": "pothole_010",
+      "latitude": 37.5676,
+      "longitude": 126.9771,
+      "riskLevel": "medium",
+      "description": "청와대 인근 도로 포트홀",
+      "reportedAt": "2024-01-21T07:50:00Z",
+      "severity": 7.0,
+      "size": "medium",
+      "status": "reported"
+    }
+  ],
+  "clusters": [
+    {
+      "id": "cluster_001",
+      "latitude": 37.5665,
+      "longitude": 126.9780,
+      "count": 3,
+      "riskLevel": "high",
+      "potholeIds": ["pothole_001", "pothole_002", "pothole_003"]
+    },
+    {
+      "id": "cluster_002",
+      "latitude": 37.5670,
+      "longitude": 126.9775,
+      "count": 4,
+      "riskLevel": "medium",
+      "potholeIds": ["pothole_004", "pothole_005", "pothole_006", "pothole_008"]
+    },
+    {
+      "id": "cluster_003",
+      "latitude": 37.5660,
+      "longitude": 126.9785,
+      "count": 3,
+      "riskLevel": "medium",
+      "potholeIds": ["pothole_007", "pothole_009", "pothole_010"]
+    }
+  ]
+}
