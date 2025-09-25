@@ -10,9 +10,11 @@ class MapController {
   NaverMapController? _mapController;
   final ValueNotifier<bool> _isMapReady = ValueNotifier<bool>(false);
   final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
-    const NLatLng(37.5666805, 126.9784147), // 서울시청 기본 위치
+    const NLatLng(33.4996213, 126.5311884), // 제주시 기본 위치
   );
-  final ValueNotifier<String> _currentAddress = ValueNotifier<String>('위치 로딩 중...');
+  final ValueNotifier<String> _currentAddress = ValueNotifier<String>(
+    '위치 로딩 중...',
+  );
 
   /// 맵 준비 상태 notifier
   ValueNotifier<bool> get isMapReadyNotifier => _isMapReady;
@@ -40,6 +42,9 @@ class MapController {
     _mapController = controller;
     _isMapReady.value = true;
     AppLogger.info('네이버 맵 컨트롤러 설정 완료');
+
+    // 맵이 준비되면 자동으로 현재 위치 가져오기
+    getCurrentLocation();
   }
 
   /// 특정 위치로 이동
@@ -124,7 +129,9 @@ class MapController {
       await _mapController!.addOverlay(marker);
       await _mapController!.addOverlay(infoWindow);
 
-      AppLogger.info('마커 추가: $title at ${position.latitude}, ${position.longitude}');
+      AppLogger.info(
+        '마커 추가: $title at ${position.latitude}, ${position.longitude}',
+      );
     } catch (e) {
       AppLogger.error('마커 추가 실패', error: e);
     }
@@ -143,7 +150,7 @@ class MapController {
   }
 
   /// 현재 위치 가져오기
-  Future<void> getCurrentLocation() async {
+  Future<void> getCurrentLocation({bool moveMap = true}) async {
     try {
       // 위치 권한 확인
       LocationPermission permission = await Geolocator.checkPermission();
@@ -166,18 +173,28 @@ class MapController {
       );
 
       final currentLatLng = NLatLng(position.latitude, position.longitude);
-      _currentPosition.value = currentLatLng;
 
-      // 주소 변환
-      await _updateAddressFromPosition(currentLatLng);
+      // 위치가 실제로 변경된 경우에만 업데이트
+      if (_currentPosition.value.latitude != position.latitude ||
+          _currentPosition.value.longitude != position.longitude) {
+        _currentPosition.value = currentLatLng;
 
-      // 맵이 준비되었다면 현재 위치로 이동
-      if (_mapController != null) {
-        await moveToPosition(currentLatLng);
-        await addCurrentLocationMarker();
+        // 주소 변환
+        await _updateAddressFromPosition(currentLatLng);
+
+        // 맵이 준비되었다면 현재 위치로 이동 (선택적)
+        if (_mapController != null && moveMap) {
+          await moveToPosition(currentLatLng);
+          await addCurrentLocationMarker();
+        } else if (_mapController != null) {
+          // 맵을 이동하지 않더라도 마커는 업데이트
+          await addCurrentLocationMarker();
+        }
+
+        AppLogger.info('현재 위치 업데이트: ${position.latitude}, ${position.longitude}');
+      } else {
+        AppLogger.info('위치 변경 없음: ${position.latitude}, ${position.longitude}');
       }
-
-      AppLogger.info('현재 위치 획득: ${position.latitude}, ${position.longitude}');
     } catch (e) {
       AppLogger.error('현재 위치 가져오기 실패', error: e);
       _currentAddress.value = '위치를 가져올 수 없습니다: ${e.toString()}';
@@ -232,7 +249,9 @@ class MapController {
           address += ' ${place.subThoroughfare!}';
         }
 
-        _currentAddress.value = address.trim().isNotEmpty ? address.trim() : '주소를 찾을 수 없습니다';
+        _currentAddress.value = address.trim().isNotEmpty
+            ? address.trim()
+            : '주소를 찾을 수 없습니다';
       } else {
         _currentAddress.value = '주소를 찾을 수 없습니다';
       }

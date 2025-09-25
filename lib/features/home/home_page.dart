@@ -15,14 +15,35 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver, RouteAware {
   final MapController _mapController = MapController();
   bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeMap();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // 앱이 활성화될 때 현재 위치 업데이트
+    if (state == AppLifecycleState.resumed && _isInitialized) {
+      _updateCurrentLocation();
+    }
+  }
+
+  Future<void> _updateCurrentLocation() async {
+    try {
+      // 페이지 복귀 시에는 맵을 이동하지 않고 위치만 업데이트
+      await _mapController.getCurrentLocation(moveMap: false);
+      AppLogger.info('현재 위치 업데이트 완료');
+    } catch (e) {
+      AppLogger.error('현재 위치 업데이트 실패', error: e);
+    }
   }
 
   Future<void> _initializeMap() async {
@@ -41,6 +62,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _mapController.dispose();
     super.dispose();
   }
@@ -58,44 +80,19 @@ class _HomePageState extends State<HomePage> {
           statusBarIconBrightness: Brightness.dark,
         ),
         title: Container(), // 빈 타이틀
-        actions: [
-          if (AppConfig.enableDebugTools)
-            Container(
-              margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.bug_report, color: Colors.orange),
-                onPressed: () => DebugHelper.logDeviceInfo(context),
-                tooltip: 'Debug Info',
-              ),
-            ),
-        ],
+        actions: [],
       ),
       body: Stack(
         children: [
           // 네이버 맵 (전체 화면)
-          if (_isInitialized)
-            _buildNaverMap()
-          else
-            _buildLoadingView(),
+          if (_isInitialized) _buildNaverMap() else _buildLoadingView(),
 
-          // 상단 위치 표시 카드
+          // 상단 현재 위치 표시
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 16,
-            right: 80,
-            child: _buildTopLocationCard(),
+            right: 16,
+            child: _buildCurrentLocationCard(),
           ),
 
           // 현재 위치 버튼
@@ -112,11 +109,12 @@ class _HomePageState extends State<HomePage> {
             child: _buildZoomButtons(),
           ),
 
-          // 우하단 플로팅 버튼
+          // 하단 버튼들
           Positioned(
-            bottom: 100,
+            bottom: 20,
+            // left: 16,
             right: 16,
-            child: _buildFloatingActionButton(),
+            child: _buildBottomButtons(),
           ),
         ],
       ),
@@ -172,7 +170,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildTopLocationCard() {
+  Widget _buildCurrentLocationCard() {
     return ValueListenableBuilder<String>(
       valueListenable: _mapController.currentAddressNotifier,
       builder: (context, address, child) {
@@ -195,96 +193,36 @@ class _HomePageState extends State<HomePage> {
               const Icon(Icons.location_on, color: Colors.orange, size: 20),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  address,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '현재 위치',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      address,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildLocationCard() {
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: ValueListenableBuilder<String>(
-          valueListenable: _mapController.currentAddressNotifier,
-          builder: (context, address, child) {
-            return ValueListenableBuilder<NLatLng>(
-              valueListenable: _mapController.currentPositionNotifier,
-              builder: (context, position, child) {
-                return Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.red, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '현재 위치',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            address,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '위도: ${position.latitude.toStringAsFixed(6)}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            '경도: ${position.longitude.toStringAsFixed(6)}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh, size: 20),
-                      onPressed: () => _mapController.getCurrentLocation(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 24,
-                        minHeight: 24,
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        ),
-      ),
     );
   }
 
@@ -347,11 +285,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             // 구분선
-            Container(
-              height: 1,
-              width: 40,
-              color: Colors.grey[300],
-            ),
+            Container(height: 1, width: 40, color: Colors.grey[300]),
             // 축소 버튼
             Container(
               decoration: BoxDecoration(
@@ -394,15 +328,60 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton(
-      onPressed: () {
-        // 포트홀 신고 기능 (추후 구현)
-      },
-      backgroundColor: Colors.orange,
-      child: const Icon(Icons.add, color: Colors.white, size: 28),
+  Widget _buildBottomButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // 디버깅 버튼 (왼쪽)
+        if (AppConfig.enableDebugTools)
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  spreadRadius: 1,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.bug_report, color: Colors.orange),
+              onPressed: () => DebugHelper.logDeviceInfo(context),
+              tooltip: 'Debug Info',
+            ),
+          )
+        else
+          const SizedBox(width: 56), // 디버그 버튼이 없을 때 공간 유지
+        // 갤러리 이동 버튼 (오른쪽)
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.orange,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.add, color: Colors.white, size: 28),
+            onPressed: () {
+              context.push('/gallery');
+            },
+            tooltip: 'Gallery',
+          ),
+        ),
+      ],
     );
   }
-
-
 }
