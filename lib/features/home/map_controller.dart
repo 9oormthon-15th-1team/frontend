@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../core/services/logging/app_logger.dart';
 
@@ -137,6 +139,106 @@ class MapController {
       AppLogger.info('모든 마커 제거');
     } catch (e) {
       AppLogger.error('마커 제거 실패', error: e);
+    }
+  }
+
+  /// 현재 위치 가져오기
+  Future<void> getCurrentLocation() async {
+    try {
+      // 위치 권한 확인
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('위치 권한이 거부되었습니다.');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('위치 권한이 영구적으로 거부되었습니다. 설정에서 권한을 허용해주세요.');
+      }
+
+      // 현재 위치 가져오기
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final currentLatLng = NLatLng(position.latitude, position.longitude);
+      _currentPosition.value = currentLatLng;
+
+      // 주소 변환
+      await _updateAddressFromPosition(currentLatLng);
+
+      // 맵이 준비되었다면 현재 위치로 이동
+      if (_mapController != null) {
+        await moveToPosition(currentLatLng);
+        await addCurrentLocationMarker();
+      }
+
+      AppLogger.info('현재 위치 획득: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      AppLogger.error('현재 위치 가져오기 실패', error: e);
+      _currentAddress.value = '위치를 가져올 수 없습니다: ${e.toString()}';
+    }
+  }
+
+  /// 현재 위치 마커 추가
+  Future<void> addCurrentLocationMarker() async {
+    if (_mapController == null) return;
+
+    try {
+      // 기존 마커 제거
+      await clearMarkers();
+
+      // 현재 위치 마커 추가
+      final marker = NMarker(
+        id: 'current_location',
+        position: _currentPosition.value,
+      );
+
+      await _mapController!.addOverlay(marker);
+      AppLogger.info('현재 위치 마커 추가');
+    } catch (e) {
+      AppLogger.error('현재 위치 마커 추가 실패', error: e);
+      // 기본 마커로 fallback
+      await addMarker(_currentPosition.value, '현재 위치');
+    }
+  }
+
+  /// 위치에서 주소 변환
+  Future<void> _updateAddressFromPosition(NLatLng position) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        String address = '';
+
+        if (place.administrativeArea != null) {
+          address += place.administrativeArea!;
+        }
+        if (place.locality != null) {
+          address += ' ${place.locality!}';
+        }
+        if (place.thoroughfare != null) {
+          address += ' ${place.thoroughfare!}';
+        }
+        if (place.subThoroughfare != null) {
+          address += ' ${place.subThoroughfare!}';
+        }
+
+        _currentAddress.value = address.trim().isNotEmpty ? address.trim() : '주소를 찾을 수 없습니다';
+      } else {
+        _currentAddress.value = '주소를 찾을 수 없습니다';
+      }
+    } catch (e) {
+      AppLogger.error('주소 변환 실패', error: e);
+      _currentAddress.value = '주소 변환 실패';
     }
   }
 
