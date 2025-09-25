@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/features/pothole_report/screens/photo_selection_screen.dart';
 
 import '../../core/services/logging/app_logger.dart';
 import 'map_controller.dart';
@@ -323,7 +324,7 @@ class _HomePageState extends State<HomePage>
                   fit: BoxFit.cover,
                 ),
                 onPressed: () {
-                  _showPotholeReportBottomSheet();
+                  _showPhotoSelectionScreen();
                 },
                 tooltip: 'Gallery',
               ),
@@ -379,12 +380,12 @@ class _HomePageState extends State<HomePage>
   }
 
   /// 포트홀 신고 bottom sheet 표시
-  void _showPotholeReportBottomSheet() {
+  void _showPhotoSelectionScreen() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => const PotholeReportBottomSheet(),
+      builder: (context) => const PhotoSelectionScreen(),
     );
   }
 }

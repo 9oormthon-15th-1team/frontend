@@ -2,13 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 
-import '../../../core/models/pothole_report.dart';
-import '../../../core/services/api/pothole_report_service.dart';
 import '../../../core/services/logging/app_logger.dart';
 import '../../../core/theme/tokens/app_colors.dart';
 import '../models/photo_selection_state.dart';
@@ -16,7 +12,6 @@ import '../widgets/camera_area.dart';
 import '../widgets/image_picker_dialog.dart';
 import '../widgets/photo_grid.dart';
 
-/// 포트홀 사진 촬영/선택 화면
 class PhotoSelectionScreen extends StatefulWidget {
   const PhotoSelectionScreen({super.key});
 
@@ -34,91 +29,8 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
   }
 
-  /// 현재 위치 가져오기
-  Future<void> _getCurrentLocation() async {
-    try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        final requestResult = await Geolocator.requestPermission();
-        if (requestResult == LocationPermission.denied) {
-          _showPermissionDialog();
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        _showPermissionDialog();
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 0,
-        ),
-      );
-
-      setState(() {
-        _currentPosition = position;
-      });
-
-      AppLogger.info('현재 위치 가져오기 완료: ${position.latitude}, ${position.longitude}');
-    } catch (e) {
-      AppLogger.error('현재 위치 가져오기 실패', error: e);
-      _showLocationErrorDialog();
-    }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('위치 권한 필요'),
-        content: const Text('포트홀 위치를 정확히 기록하기 위해 위치 권한이 필요합니다. 설정에서 권한을 허용해주세요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              openAppSettings();
-            },
-            child: const Text('설정으로 이동'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLocationErrorDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('위치 오류'),
-        content: const Text('현재 위치를 가져올 수 없습니다. 다시 시도해주세요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _getCurrentLocation();
-            },
-            child: const Text('재시도'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 이미지 선택 다이얼로그 표시
   Future<void> _showImagePicker() async {
     if (_isLoading) return;
 
@@ -175,7 +87,8 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
   /// 갤러리에서 이미지 선택
   Future<void> _pickFromGallery() async {
     try {
-      if (_photoState.canAddMore && _photoState.maxImages - _photoState.selectedImages.length > 1) {
+      if (_photoState.canAddMore &&
+          _photoState.maxImages - _photoState.selectedImages.length > 1) {
         // 여러 장 선택 가능
         final images = await _imagePicker.pickMultiImage(
           imageQuality: 80,
@@ -262,7 +175,6 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
       );
 
       // 이전 화면으로 돌아가기
-      Navigator.of(context).pop();
 
       AppLogger.info('포트홀 신고 제출 완료');
     } catch (e) {
@@ -275,7 +187,6 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
     }
   }
 
-  /// 실제 포트홀 신고 API 제출
   Future<void> _submitPotholeReport() async {
     if (_currentPosition == null) {
       throw Exception('위치 정보를 가져올 수 없습니다');
@@ -293,27 +204,11 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
         throw Exception('이미지 처리 중 오류가 발생했습니다');
       }
     }
-
-    final report = PotholeReport(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: '포트홀 신고',
-      description: '모바일 앱을 통한 포트홀 신고 (${_photoState.selectedImages.length}장의 사진)',
-      latitude: _currentPosition!.latitude,
-      longitude: _currentPosition!.longitude,
-      createdAt: DateTime.now(),
-      imageBase64: imageBase64,
-      status: 'pending',
-    );
-
-    await PotholeReportService.pushReport(report);
   }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -321,25 +216,11 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('포트홀 신고'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+
       body: Column(
         children: [
-          // 상단 지도 영역
-          _buildMapArea(),
-
           // 메인 콘텐츠
-          Expanded(
-            child: _buildMainContent(),
-          ),
+          Expanded(child: _buildMainContent()),
 
           // 하단 버튼 영역
           _buildBottomButtons(),
@@ -349,81 +230,6 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
   }
 
   /// 상단 지도 영역
-  Widget _buildMapArea() {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.25,
-      width: double.infinity,
-      color: Colors.grey[200],
-      child: _currentPosition != null
-          ? _buildNaverMap()
-          : _buildMapPlaceholder(),
-    );
-  }
-
-  /// 네이버 맵
-  Widget _buildNaverMap() {
-    return NaverMap(
-      options: NaverMapViewOptions(
-        initialCameraPosition: NCameraPosition(
-          target: NLatLng(
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
-          ),
-          zoom: 16,
-        ),
-        locale: const Locale('ko'),
-        mapType: NMapType.basic,
-        scrollGesturesEnable: false,
-        zoomGesturesEnable: false,
-        tiltGesturesEnable: false,
-        rotationGesturesEnable: false,
-      ),
-      onMapReady: (controller) {
-        // 현재 위치에 마커 추가
-        _addCurrentLocationMarker(controller);
-      },
-    );
-  }
-
-  /// 현재 위치 마커 추가
-  void _addCurrentLocationMarker(NaverMapController controller) async {
-    final marker = NMarker(
-      id: 'current_location',
-      position: NLatLng(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-      ),
-    );
-
-    await controller.addOverlay(marker);
-  }
-
-  /// 지도 플레이스홀더
-  Widget _buildMapPlaceholder() {
-    return Container(
-      color: Colors.grey[100],
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.map_outlined,
-              size: 48,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '위치 정보를 가져오는 중...',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   /// 메인 콘텐츠
   Widget _buildMainContent() {
@@ -436,10 +242,7 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
           const Center(
             child: Text(
               '포트홀 사진',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 24),
@@ -491,22 +294,23 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
           Expanded(
             flex: 2,
             child: OutlinedButton(
-              onPressed: _photoState.hasImages && !_isLoading ? _retakePhotos : null,
+              onPressed: _photoState.hasImages && !_isLoading
+                  ? _retakePhotos
+                  : null,
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 side: BorderSide(
-                  color: _photoState.hasImages ? Colors.grey[400]! : Colors.grey[300]!,
+                  color: _photoState.hasImages
+                      ? Colors.grey[400]!
+                      : Colors.grey[300]!,
                 ),
               ),
               child: const Text(
                 '재촬영',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -517,7 +321,9 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
           Expanded(
             flex: 3,
             child: ElevatedButton(
-              onPressed: _photoState.hasImages && !_isSubmitting ? _submitReport : null,
+              onPressed: _photoState.hasImages && !_isSubmitting
+                  ? _submitReport
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange.normal,
                 foregroundColor: Colors.white,

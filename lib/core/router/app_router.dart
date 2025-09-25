@@ -62,13 +62,6 @@ class AppRouter {
             name: 'settings',
             builder: (context, state) => const SettingsPage(),
           ),
-
-          // Photo selection route
-          GoRoute(
-            path: '/photo-selection',
-            name: 'photo-selection',
-            builder: (context, state) => const PhotoSelectionScreen(),
-          ),
         ],
       ),
     ],
