@@ -3,6 +3,7 @@
 //   shared_preferences: ^2.2.2
 
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/design_system.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/onboarding_content.dart';
@@ -23,26 +24,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
     OnboardingData(
       title: '포트홀을 발견하셨나요?',
       description: '도로 위의 위험한 포트홀을\n쉽게 신고할 수 있어요',
-      icon: Icons.warning_amber_rounded,
-      color: Colors.orange,
+      imagePath: 'assets/png/onboading_01.png',
     ),
     OnboardingData(
       title: '사진으로 간편하게',
       description: '카메라나 갤러리에서\n사진을 선택하여 신고하세요',
-      icon: Icons.camera_alt_rounded,
-      color: Colors.blue,
+      imagePath: 'assets/png/onboading_02.png',
     ),
     OnboardingData(
       title: '실시간 위치 확인',
       description: '현재 위치를 기반으로\n정확한 신고가 가능해요',
-      icon: Icons.location_on_rounded,
-      color: Colors.green,
+      imagePath: 'assets/png/onboading_03.png',
     ),
     OnboardingData(
       title: '안전한 도로 만들기',
       description: '여러분의 신고로\n모두가 안전한 길을 만들어가요',
-      icon: Icons.favorite_rounded,
-      color: Colors.red,
+      imagePath: 'assets/png/onboading_04.png',
     ),
   ];
 
@@ -146,45 +143,45 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Row(
                 children: [
                   // Previous button
-                  if (_currentPage > 0)
+                  if (_currentPage > 0) ...[
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _previousPage,
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.orange),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          backgroundColor: Colors.grey[100],
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           '이전',
                           style: TextStyle(
-                            color: Colors.orange,
+                            color: Colors.grey[600],
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'KakaoSmallSans',
                           ),
                         ),
                       ),
-                    )
-                  else
-                    const Expanded(child: SizedBox()),
-
-                  const SizedBox(width: 16),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
 
                   // Next/Start button
                   Expanded(
+                    flex: _currentPage == 0 ? 1 : 1,
                     child: ElevatedButton(
                       onPressed: _currentPage == _pages.length - 1
                           ? _startApp
                           : _nextPage,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
+                        backgroundColor: AppColors.orange.normal,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 24),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                       ),
                       child: Text(
@@ -288,7 +285,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orange,
+      backgroundColor: AppColors.orange.normal,
       body: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -314,13 +311,11 @@ class _SplashScreenState extends State<SplashScreen> {
 class OnboardingData {
   final String title;
   final String description;
-  final IconData icon;
-  final Color color;
+  final String imagePath;
 
   OnboardingData({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.color,
+    required this.imagePath,
   });
 }

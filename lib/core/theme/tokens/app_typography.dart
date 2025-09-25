@@ -7,7 +7,7 @@ class AppTypography {
   static const TextStyle titleLg = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 20.0,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     height: 1.3,
     letterSpacing: -0.2,
   );
@@ -39,7 +39,7 @@ class AppTypography {
 
   static const TextStyle bodyDefaultBold = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 14.0,
+    fontSize: 16.0,
     fontWeight: FontWeight.w400,
     height: 1.4,
     letterSpacing: 0.0,

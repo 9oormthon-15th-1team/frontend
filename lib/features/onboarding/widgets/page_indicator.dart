@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/design_system.dart';
 
 class PageIndicator extends StatelessWidget {
   final int currentPage;
@@ -19,11 +20,13 @@ class PageIndicator extends StatelessWidget {
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: currentPage == index ? 24 : 8,
-          height: 8,
+          width: currentPage == index ? 32 : 10,
+          height: 10,
           decoration: BoxDecoration(
-            color: currentPage == index ? Colors.orange : Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
+            color: currentPage == index
+                ? AppColors.orange.normal
+                : Colors.grey[300],
+            borderRadius: BorderRadius.circular(5),
           ),
         ),
       ),
