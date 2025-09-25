@@ -25,6 +25,7 @@ class PotholeData {
   final DateTime reportedAt;
   final String? imageUrl;
   final String status;
+  final String? complaintId;
 
   const PotholeData({
     required this.id,
@@ -35,6 +36,7 @@ class PotholeData {
     required this.reportedAt,
     this.imageUrl,
     this.status = 'medium',
+    this.complaintId,
   });
 
   /// 위치 정보를 NLatLng로 변환
@@ -55,6 +57,7 @@ class PotholeData {
       status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
           .toString()
           .toLowerCase(),
+      complaintId: json['complaintId']?.toString(),
     );
   }
 }

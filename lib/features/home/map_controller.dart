@@ -23,11 +23,12 @@ class MapController {
   );
 
   final Map<String, NOverlayImage> _markerIconCache = {};
+  final Map<String, NOverlayImage> _clusterIconCache = {};
   NOverlayImage? _currentLocationOverlayImage;
 
   // 포트홀 마커 관리
   final List<PotholeMarker> _potholeMarkers = [];
-  final Map<String, NMarker> _activeMarkers = {};
+  final Map<String, NClusterableMarker> _activeMarkers = {};
 
   // BuildContext 참조 (bottom sheet 표시용)
   BuildContext? _buildContext;
@@ -60,6 +61,7 @@ class MapController {
   ) {
     _mapController = controller;
     _isMapReady.value = true;
+    _buildContext = context;
     AppLogger.info('네이버 맵 컨트롤러 설정 완료');
 
     // 맵이 준비되면 자동으로 현재 위치 가져오기
@@ -473,129 +475,85 @@ class MapController {
       return;
     }
 
+    final context = _buildContext;
+
     try {
       AppLogger.info('포트홀 마커 렌더링 시작: ${_potholeMarkers.length}개');
 
-      // 기존 포트홀 마커 제거
       await _clearPotholeMarkers();
 
-      // 새 마커를 배치로 나누어 추가 (한 번에 너무 많이 추가하면 크래시 방지)
-      int successCount = 0;
-      final batchSize = 10; // 한 번에 10개씩 추가
+      final clusterableMarkers = <NClusterableMarker>{};
 
-      for (int i = 0; i < _potholeMarkers.length; i += batchSize) {
-        final endIndex =
-            (i + batchSize < _potholeMarkers.length) ? i + batchSize : _potholeMarkers.length;
-        final batch = _potholeMarkers.sublist(i, endIndex);
-
-        AppLogger.info('마커 배치 ${i ~/ batchSize + 1} 추가 중: ${batch.length}개');
-
-        for (final marker in batch) {
-          try {
-            await _addSinglePotholeMarker(marker, context: _buildContext);
-            successCount++;
-          } catch (e) {
-            AppLogger.error('개별 포트홀 마커 추가 실패: ${marker.id}', error: e);
-          }
-        }
-
-        // 배치 간 잠깐 대기 (메모리 정리 시간 확보)
-        if (i + batchSize < _potholeMarkers.length) {
-          await Future.delayed(const Duration(milliseconds: 100));
+      for (final marker in _potholeMarkers) {
+        final clusterable = await _buildClusterableMarker(marker, context: context);
+        if (clusterable != null) {
+          clusterableMarkers.add(clusterable);
         }
       }
 
-      AppLogger.info('포트홀 마커 렌더링 완료: $successCount/${_potholeMarkers.length}개 성공');
-    } catch (e) {
-      AppLogger.error('포트홀 마커 렌더링 실패', error: e);
+      if (clusterableMarkers.isEmpty) {
+        AppLogger.warning('생성된 포트홀 마커가 없어 렌더링을 건너뜁니다');
+        return;
+      }
+
+      await _mapController!.addOverlayAll(clusterableMarkers);
+      for (final marker in clusterableMarkers) {
+        _activeMarkers[marker.info.id] = marker;
+      }
+
+      AppLogger.info('포트홀 마커 렌더링 완료: ${clusterableMarkers.length}개');
+    } catch (e, stackTrace) {
+      AppLogger.error('포트홀 마커 렌더링 실패', error: e, stackTrace: stackTrace);
     }
   }
 
-  /// 단일 포트홀 마커 추가
-  Future<void> _addSinglePotholeMarker(
+  Future<NClusterableMarker?> _buildClusterableMarker(
     PotholeMarker marker, {
     BuildContext? context,
   }) async {
     if (_mapController == null) {
-      AppLogger.warning('맵 컨트롤러가 null이어서 마커 추가 불가: ${marker.id}');
-      return;
+      AppLogger.warning('맵 컨트롤러가 null이어서 마커 생성 불가: ${marker.id}');
+      return null;
+    }
+
+    if (marker.type != PotholeMarkerType.individual || marker.potholeData == null) {
+      AppLogger.warning('클러스터링 가능한 마커는 개별 포트홀 데이터가 필요합니다: ${marker.id}');
+      return null;
     }
 
     try {
       // 위치 검증
       if (marker.position.latitude.abs() > 90 || marker.position.longitude.abs() > 180) {
         AppLogger.error('잘못된 위치 좌표: ${marker.id} - ${marker.position.latitude}, ${marker.position.longitude}');
-        return;
+        return null;
       }
 
-      NOverlayImage? icon;
-      if (marker.type == PotholeMarkerType.individual) {
-        try {
-          icon = await _getMarkerIcon(marker.status);
-        } catch (e, stackTrace) {
-          AppLogger.warning(
-            '커스텀 마커 아이콘 로드 실패: ${marker.id}, status: ${marker.status}',
-            error: e,
-            stackTrace: stackTrace,
-          );
-          icon = null;
-        }
-      }
-
-      final hasCustomIcon = icon != null;
-
-      final nMarker = NMarker(
+      final icon = await _getMarkerIcon(marker.status);
+      final clusterableMarker = NClusterableMarker(
         id: marker.id,
         position: marker.position,
-        size: hasCustomIcon ? const NSize(40, 40) : NMarker.autoSize,
-        anchor: hasCustomIcon
-            ? const NPoint(0.5, 1.0)
-            : NMarker.defaultAnchor, // 기본 마커는 기본 앵커 사용
         icon: icon,
+        size: const NSize(40, 40),
+        anchor: const NPoint(0.5, 1.0),
+        tags: {
+          'riskLevel': marker.riskLevel.name,
+          'potholeId': marker.potholeData!.id,
+        },
+        isForceShowIcon: true,
       );
 
-      // 마커 클릭 이벤트 추가
-      nMarker.setOnTapListener((overlay) {
-        if (context != null) {
-          _onPotholeMarkerTapped(marker);
-        }
-      });
-
-      if (marker.type == PotholeMarkerType.cluster || !hasCustomIcon) {
-        Color markerColor;
-        switch (marker.riskLevel) {
-          case PotholeRiskLevel.high:
-            markerColor = Colors.red;
-            break;
-          case PotholeRiskLevel.medium:
-            markerColor = Colors.orange;
-            break;
-          case PotholeRiskLevel.low:
-            markerColor = Colors.yellow;
-            break;
-        }
-
-        nMarker.setIconTintColor(markerColor);
-      }
-      AppLogger.info('기본 색상 마커 설정: ${marker.id}, 색상: ${marker.riskLevel}');
-
-      // 마커 클릭 이벤트 설정
-      nMarker.setOnTapListener((overlay) {
+      clusterableMarker.setOnTapListener((overlay) {
         try {
           _onPotholeMarkerTapped(marker);
-        } catch (e) {
-          AppLogger.error('마커 클릭 처리 실패: ${marker.id}', error: e);
+        } catch (e, stackTrace) {
+          AppLogger.error('클러스터블 마커 탭 처리 실패: ${marker.id}', error: e, stackTrace: stackTrace);
         }
       });
 
-      // 맵에 마커 추가
-      await _mapController!.addOverlay(nMarker);
-      _activeMarkers[marker.id] = nMarker;
-
-      AppLogger.info('포트홀 마커 추가 성공: ${marker.id}');
-    } catch (e) {
-      AppLogger.error('포트홀 마커 추가 실패: ${marker.id}', error: e);
-      // 재시도 또는 기본 마커로 대체하지 않음 (로그만 남김)
+      return clusterableMarker;
+    } catch (e, stackTrace) {
+      AppLogger.error('클러스터링 가능한 마커 생성 실패: ${marker.id}', error: e, stackTrace: stackTrace);
+      return null;
     }
   }
 
@@ -611,6 +569,154 @@ class MapController {
 
     _markerIconCache[key] = overlay;
     return overlay;
+  }
+
+  Future<NOverlayImage> _getClusterMarkerIcon({
+    required String label,
+    required PotholeRiskLevel riskLevel,
+    required BuildContext context,
+  }) async {
+    final cacheKey = 'cluster_${label}_${riskLevel.name}';
+    final cached = _clusterIconCache[cacheKey];
+    if (cached != null) {
+      return cached;
+    }
+
+    final backgroundColor = _getRiskColor(riskLevel);
+    final textSize = label.length <= 2
+        ? 18.0
+        : label.length == 3
+            ? 16.0
+            : 14.0;
+
+    final overlay = await NOverlayImage.fromWidget(
+      context: context,
+      size: const Size(64, 64),
+      widget: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              backgroundColor,
+              _darkenColor(backgroundColor, 0.15),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: textSize,
+            fontWeight: FontWeight.w700,
+          ),
+          textScaler: TextScaler.noScaling,
+        ),
+      ),
+    );
+
+    _clusterIconCache[cacheKey] = overlay;
+    return overlay;
+  }
+
+  void configureClusterMarker(NClusterInfo clusterInfo, NClusterMarker clusterMarker) {
+    final context = _buildContext;
+    final riskLevel = _resolveClusterRiskLevel(clusterInfo);
+    final label = _formatClusterLabel(clusterInfo.size);
+    final color = _getRiskColor(riskLevel);
+
+    clusterMarker
+      ..setSize(const NSize(64, 64))
+      ..setAnchor(const NPoint(0.5, 0.5))
+      ..setGlobalZIndex(1200)
+      ..setIsForceShowIcon(true)
+      ..setIsHideCollidedMarkers(false)
+      ..setIsHideCollidedCaptions(false)
+      ..setHideCollidedSymbols(false)
+      ..setCaption(
+        NOverlayCaption(
+          text: label,
+          textSize: label.length <= 2 ? 14 : 12,
+          color: Colors.white,
+          haloColor: Colors.transparent,
+        ),
+      );
+
+    clusterMarker.setIconTintColor(color);
+
+    if (context != null && context.mounted) {
+      _getClusterMarkerIcon(label: label, riskLevel: riskLevel, context: context).then(
+        (icon) => clusterMarker.setIcon(icon),
+        onError: (error, stackTrace) {
+          AppLogger.warning(
+            '클러스터 마커 아이콘 생성 실패: ${clusterInfo.position}',
+            error: error,
+            stackTrace: stackTrace is StackTrace ? stackTrace : null,
+          );
+        },
+      );
+    } else {
+      clusterMarker.setIconTintColor(color);
+    }
+
+    clusterMarker.setOnTapListener((overlay) {
+      _onClusterMarkerTapped(clusterInfo);
+    });
+  }
+
+  NaverMapClusteringOptions buildClusteringOptions() {
+    return NaverMapClusteringOptions(
+      clusterMarkerBuilder: (info, marker) => configureClusterMarker(info, marker),
+    );
+  }
+
+  String _formatClusterLabel(int size) {
+    if (size >= 1000) return '999+';
+    if (size > 500) return '500+';
+    return size.toString();
+  }
+
+  Color _getRiskColor(PotholeRiskLevel riskLevel) {
+    switch (riskLevel) {
+      case PotholeRiskLevel.high:
+        return const Color(0xFFE53935);
+      case PotholeRiskLevel.medium:
+        return const Color(0xFFFB8C00);
+      case PotholeRiskLevel.low:
+        return const Color(0xFFFDD835);
+    }
+  }
+
+  Color _darkenColor(Color color, double amount) {
+    final hsl = HSLColor.fromColor(color);
+    final adjusted = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return adjusted.toColor();
+  }
+
+  PotholeRiskLevel _resolveClusterRiskLevel(NClusterInfo info) {
+    PotholeRiskLevel maxLevel = PotholeRiskLevel.low;
+    for (final child in info.children) {
+      final tag = child.tags['riskLevel'];
+      final level = PotholeRiskLevel.values.firstWhere(
+        (value) => value.name == tag,
+        orElse: () => PotholeRiskLevel.medium,
+      );
+      if (level.index > maxLevel.index) {
+        maxLevel = level;
+      }
+    }
+    return maxLevel;
   }
 
   String _mapStatusToAsset(String status) {
@@ -668,6 +774,10 @@ class MapController {
             images: selectedImages,
             status: pothole.status,
             severity: pothole.riskLevel.name,
+            firstReportedAt: pothole.reportedAt,
+            latestReportedAt: pothole.reportedAt,
+            reportCount: 1,
+            complaintId: pothole.complaintId,
           );
 
           AppLogger.info('PotholeInfo 생성 완료, bottom sheet 표시 시도');
@@ -706,6 +816,44 @@ class MapController {
     }
   }
 
+  Future<void> _onClusterMarkerTapped(NClusterInfo info) async {
+    if (_mapController == null) return;
+
+    try {
+      final positions = info.children.map((child) => child.position).toList();
+      if (positions.isEmpty) {
+        AppLogger.warning('클러스터 정보에 자식 마커가 없습니다: ${info.size}');
+        return;
+      }
+
+      late final NCameraUpdate cameraUpdate;
+      if (positions.length == 1) {
+        final currentZoom = _mapController!.nowCameraPosition.zoom;
+        final targetZoom = (currentZoom + 1).clamp(0.0, 21.0).toDouble();
+        cameraUpdate = NCameraUpdate.scrollAndZoomTo(
+          target: positions.first,
+          zoom: targetZoom,
+        );
+      } else {
+        final bounds = NLatLngBounds.from(positions);
+        cameraUpdate = NCameraUpdate.fitBounds(
+          bounds,
+          padding: const EdgeInsets.all(80),
+        );
+      }
+
+      cameraUpdate.setAnimation(
+        animation: NCameraAnimation.easing,
+        duration: const Duration(milliseconds: 500),
+      );
+
+      await _mapController!.updateCamera(cameraUpdate);
+      AppLogger.info('클러스터 영역으로 카메라 이동: ${info.position}');
+    } catch (e, stackTrace) {
+      AppLogger.error('클러스터 마커 클릭 처리 중 오류', error: e, stackTrace: stackTrace);
+    }
+  }
+
   /// 포트홀 마커 제거
   Future<void> _clearPotholeMarkers() async {
     if (_mapController == null) return;
@@ -726,41 +874,7 @@ class MapController {
 
   /// 줌 레벨에 따른 마커 표시 방식 변경
   Future<void> updateMarkersForZoomLevel(double zoomLevel) async {
-    if (_mapController == null) return;
-
-    try {
-      // 포트홀 마커가 없으면 업데이트하지 않음
-      if (_potholeMarkers.isEmpty) {
-        AppLogger.info('포트홀 마커가 없어서 줌 레벨 업데이트 건너뜀');
-        return;
-      }
-
-      AppLogger.info('줌 레벨 $zoomLevel, 전체 마커 수: ${_potholeMarkers.length}');
-
-      // 모든 마커를 항상 표시하도록 변경 (줌 레벨에 관계없이)
-      // 줌 레벨이 높으면(확대) 개별 마커를 우선하고, 낮으면(축소) 클러스터도 함께 표시
-      List<PotholeMarker> markersToShow = [];
-
-      if (zoomLevel >= 13.0) {
-        // 줌 인 상태: 모든 개별 마커 표시
-        markersToShow = _potholeMarkers
-            .where((m) => m.type == PotholeMarkerType.individual)
-            .toList();
-        AppLogger.info('개별 마커 표시: ${markersToShow.length}개');
-      } else {
-        // 줌 아웃 상태: 클러스터 마커와 개별 마커 모두 표시
-        markersToShow = _potholeMarkers.toList();
-        AppLogger.info('모든 마커 표시: ${markersToShow.length}개');
-      }
-
-      if (markersToShow.isNotEmpty) {
-        await addPotholeMarkers(markersToShow);
-      }
-
-      AppLogger.info('줌 레벨 $zoomLevel에 따른 마커 업데이트 완료');
-    } catch (e) {
-      AppLogger.error('줌 레벨별 마커 업데이트 실패', error: e);
-    }
+    AppLogger.info('줌 레벨 $zoomLevel 변경 감지 - 네이버 맵 클러스터링이 자동으로 처리됩니다');
   }
 
   /// JSON 파일에서 포트홀 데이터 로드
@@ -790,6 +904,7 @@ class MapController {
                 status: (potholeData['status'] ?? potholeData['size'] ?? 'high')
                     .toString()
                     .toLowerCase(),
+                complaintId: potholeData['complaintId']?.toString(),
               );
               allMarkers.add(PotholeMarker.individual(pothole));
               AppLogger.info('pothole_data.json에서 포트홀 ${pothole.id} 파싱 완료');
@@ -877,6 +992,7 @@ class MapController {
       status: (json['status'] ?? json['size'] ?? json['riskLevel'] ?? 'medium')
           .toString()
           .toLowerCase(),
+      complaintId: json['complaintId']?.toString(),
     );
   }
 
@@ -919,6 +1035,7 @@ class MapController {
           description: '큰 포트홀',
           reportedAt: DateTime.now(),
           status: 'high',
+          complaintId: 'SAMPLE-1001',
         ),
       ),
       PotholeMarker.individual(
@@ -930,6 +1047,7 @@ class MapController {
           description: '중간 포트홀',
           reportedAt: DateTime.now(),
           status: 'medium',
+          complaintId: 'SAMPLE-1002',
         ),
       ),
       PotholeMarker.individual(
@@ -941,6 +1059,7 @@ class MapController {
           description: '작은 포트홀',
           reportedAt: DateTime.now(),
           status: 'small',
+          complaintId: 'SAMPLE-1003',
         ),
       ),
 
@@ -976,6 +1095,7 @@ class MapController {
     _potholeMarkers.clear();
     _activeMarkers.clear();
     _markerIconCache.clear();
+    _clusterIconCache.clear();
     _currentLocationOverlayImage = null;
     _mapController = null;
   }

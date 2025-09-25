@@ -10,6 +10,10 @@ class PotholeInfo {
   final List<String> images;
   final String status;
   final String severity;
+  final DateTime? firstReportedAt;
+  final DateTime? latestReportedAt;
+  final int reportCount;
+  final String? complaintId;
 
   const PotholeInfo({
     required this.id,
@@ -22,6 +26,10 @@ class PotholeInfo {
     required this.images,
     required this.status,
     required this.severity,
+    this.firstReportedAt,
+    this.latestReportedAt,
+    this.reportCount = 1,
+    this.complaintId,
   });
 
   /// JSON에서 PotholeInfo 객체 생성
@@ -41,6 +49,14 @@ class PotholeInfo {
           .toList() ?? [],
       status: json['status']?.toString() ?? 'pending',
       severity: json['severity']?.toString() ?? 'medium',
+      firstReportedAt: json['firstReportedAt'] != null
+          ? DateTime.tryParse(json['firstReportedAt'].toString())
+          : null,
+      latestReportedAt: json['latestReportedAt'] != null
+          ? DateTime.tryParse(json['latestReportedAt'].toString())
+          : null,
+      reportCount: (json['reportCount'] as num?)?.toInt() ?? 1,
+      complaintId: json['complaintId']?.toString(),
     );
   }
 
@@ -57,6 +73,10 @@ class PotholeInfo {
       'images': images,
       'status': status,
       'severity': severity,
+      'firstReportedAt': firstReportDate.toIso8601String(),
+      'latestReportedAt': latestReportDate.toIso8601String(),
+      'reportCount': reportCount,
+      'complaintId': complaintId,
     };
   }
 
@@ -113,6 +133,15 @@ class PotholeInfo {
     return images.length > 6 ? images.take(6).toList() : images;
   }
 
+  /// 최초 신고 일자 (없다면 createdAt 사용)
+  DateTime get firstReportDate => firstReportedAt ?? createdAt;
+
+  /// 최신 신고 일자 (없다면 createdAt 사용)
+  DateTime get latestReportDate => latestReportedAt ?? createdAt;
+
+  /// 추가 신고 횟수 (최소 0)
+  int get additionalReportCount => reportCount > 1 ? reportCount - 1 : 0;
+
   /// 추가 이미지 개수
   int get additionalImageCount {
     return images.length > 6 ? images.length - 6 : 0;
@@ -130,6 +159,10 @@ class PotholeInfo {
     List<String>? images,
     String? status,
     String? severity,
+    DateTime? firstReportedAt,
+    DateTime? latestReportedAt,
+    int? reportCount,
+    String? complaintId,
   }) {
     return PotholeInfo(
       id: id ?? this.id,
@@ -142,6 +175,10 @@ class PotholeInfo {
       images: images ?? this.images,
       status: status ?? this.status,
       severity: severity ?? this.severity,
+      firstReportedAt: firstReportedAt ?? this.firstReportedAt,
+      latestReportedAt: latestReportedAt ?? this.latestReportedAt,
+      reportCount: reportCount ?? this.reportCount,
+      complaintId: complaintId ?? this.complaintId,
     );
   }
 

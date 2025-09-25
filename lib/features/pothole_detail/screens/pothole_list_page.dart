@@ -75,6 +75,14 @@ class _PotholeListPageState extends State<PotholeListPage> {
         images: baseImages.take((index % 3) + 1).toList(),
         status: ['pending', 'in_progress', 'completed'][index % 3],
         severity: ['low', 'medium', 'high'][index % 3],
+        firstReportedAt: DateTime.now().subtract(
+          Duration(days: index + 2, hours: (index + 5) % 24),
+        ),
+        latestReportedAt: DateTime.now().subtract(
+          Duration(days: index, hours: index % 12),
+        ),
+        reportCount: (index % 4) + 1,
+        complaintId: '2024-${1200 + index}',
       );
     });
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
@@ -18,6 +20,7 @@ class _HomePageState extends State<HomePage>
     with WidgetsBindingObserver, RouteAware {
   final MapController _mapController = MapController();
   bool _isInitialized = false;
+  Timer? _cameraChangeDebounce;
 
   @override
   void initState() {
@@ -85,6 +88,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cameraChangeDebounce?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -159,6 +163,7 @@ class _HomePageState extends State<HomePage>
         zoomGesturesEnable: true,
         stopGesturesEnable: true,
       ),
+      clusterOptions: _mapController.buildClusteringOptions(),
       onMapReady: (NaverMapController controller) {
         _mapController.setMapController(controller, context);
         AppLogger.info('네이버 맵 준비 완료');
@@ -166,7 +171,28 @@ class _HomePageState extends State<HomePage>
       onMapTapped: (NPoint point, NLatLng latLng) {
         AppLogger.info('맵 탭: ${latLng.latitude}, ${latLng.longitude}');
       },
-      onCameraChange: null,
+      onCameraChange: (NCameraUpdateReason reason, bool animated) async {
+        if (_mapController.mapController == null) return;
+
+        // 팬/줌 제스처 또는 컨트롤 버튼 조작에만 반응
+        if (reason != NCameraUpdateReason.gesture &&
+            reason != NCameraUpdateReason.control) {
+          return;
+        }
+
+        _cameraChangeDebounce?.cancel();
+        _cameraChangeDebounce = Timer(const Duration(milliseconds: 300), () async {
+          final controller = _mapController.mapController;
+          if (controller == null) return;
+
+          try {
+            final cameraPosition = await controller.getCameraPosition();
+            await _mapController.updateMarkersForZoomLevel(cameraPosition.zoom);
+          } catch (e) {
+            AppLogger.warning('카메라 위치 조회 실패', error: e);
+          }
+        });
+      },
     );
   }
 

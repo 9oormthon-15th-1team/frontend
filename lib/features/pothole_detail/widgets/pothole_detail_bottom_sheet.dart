@@ -7,178 +7,318 @@ import '../../../core/theme/tokens/app_colors.dart';
 import '../models/pothole_info.dart';
 
 /// 포트홀 상세 정보를 표시하는 bottom sheet
-class PotholeDetailBottomSheet extends StatelessWidget {
+class PotholeDetailBottomSheet extends StatefulWidget {
   const PotholeDetailBottomSheet({super.key, required this.potholeInfo});
 
   final PotholeInfo potholeInfo;
 
+  static Future<void> show(BuildContext context, PotholeInfo potholeInfo) {
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.58,
+      ),
+      builder: (context) => PotholeDetailBottomSheet(potholeInfo: potholeInfo),
+    );
+  }
+
+  @override
+  State<PotholeDetailBottomSheet> createState() =>
+      _PotholeDetailBottomSheetState();
+}
+
+class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
+  late final PageController _pageController;
+  int _currentImageIndex = 0;
+
+  List<String> get _images => widget.potholeInfo.displayImages;
+
+  bool get _shouldUseSlider => _images.length >= 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.of(context).padding.bottom;
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 핸들 바
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // 콘텐츠
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 제목 (사진 포함)
-                  _buildHeader(),
-                  const SizedBox(height: 20),
-
-                  // 위치 정보
-                  _buildLocationSection(),
-                  const SizedBox(height: 16),
-
-                  // 설명
-                  _buildDescriptionSection(),
-                  const SizedBox(height: 20),
-
-                  // 하단 안전 영역
-                  SizedBox(height: MediaQuery.of(context).padding.bottom),
-                ],
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 헤더 (제목 + 사진 + 날짜 + 상태)
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Text(
-            '포트홀 상세정보',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // 사진 섹션을 헤더에 포함
-        if (potholeInfo.images.isNotEmpty) ...[
-          _buildPhotosSection(),
-          const SizedBox(height: 20),
-        ],
-
-        Row(
-          children: [
-            Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 4),
-            Text(
-              DateFormat('yyyy.MM.dd. HH:mm').format(potholeInfo.createdAt),
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            const Spacer(),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// 사진 섹션
-  Widget _buildPhotosSection() {
-    final displayImages = potholeInfo.displayImages;
-
-    if (displayImages.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const SizedBox(width: 8),
-            Text(
-              '${potholeInfo.images.length}장',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _buildPhotoGrid(displayImages),
-      ],
-    );
-  }
-
-  /// 사진 그리드 (최대 6개)
-  Widget _buildPhotoGrid(List<String> images) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: images.length > 6 ? 6 : images.length,
-      itemBuilder: (context, index) {
-        final isLastItem = index == 5 && images.length > 6;
-
-        return GestureDetector(
-          onTap: () => _showImageViewer(context, images, index),
-          child: Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[200],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _buildImageWidget(images[index]),
-                ),
-              ),
-              // +N 더 표시
-              if (isLastItem)
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.black.withValues(alpha: 0.6),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '+${potholeInfo.additionalImageCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomSafe),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 4),
+                    const Center(
+                      child: Text(
+                        '포트홀 상세정보',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildReportSummary(),
+                    const SizedBox(height: 20),
+                    _buildImageSection(context),
+                    const SizedBox(height: 16),
+                    _buildAddressCard(),
+                    const SizedBox(height: 12),
+                    _buildDescriptionCard(),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportSummary() {
+    final formatter = DateFormat('yyyy.MM.dd. HH:mm');
+    final info = widget.potholeInfo;
+    final additionalText = info.additionalReportCount > 0
+        ? ' (${info.reportCount})'
+        : '';
+
+    Widget buildRow(String label, String value) {
+      return Row(
+        children: [
+          Text(
+            '$label : ',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final rows = <Widget>[
+      buildRow('최초 신고 일자', formatter.format(info.firstReportDate)),
+      const SizedBox(height: 6),
+      buildRow(
+        '추가 신고 일자',
+        '${formatter.format(info.latestReportDate)}$additionalText',
+      ),
+    ];
+
+    rows
+      ..add(const SizedBox(height: 6))
+      ..add(
+        buildRow(
+          '민원번호',
+          (info.complaintId == null || info.complaintId!.isEmpty)
+              ? '정보 없음'
+              : info.complaintId!,
+        ),
+      );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rows,
+    );
+  }
+
+  Widget _buildImageSection(BuildContext context) {
+    if (_images.isEmpty) {
+      return _buildImagePlaceholderContainer();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Text(
+        //   '이미지 (${_images.length}/6)',
+        //   style: TextStyle(
+        //     fontSize: 14,
+        //     color: Colors.grey[600],
+        //     fontWeight: FontWeight.w500,
+        //   ),
+        // ),
+        // const SizedBox(height: 12),
+        if (_shouldUseSlider) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _images.length,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentImageIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return _buildImageCard(context, _images[index], index);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPageIndicator(_images.length),
+        ] else
+          Row(
+            children: [
+              for (int i = 0; i < _images.length; i++) ...[
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: _buildImageCard(context, _images[i], i),
                     ),
                   ),
                 ),
+                if (i != _images.length - 1) const SizedBox(width: 12),
+              ],
             ],
           ),
-        );
-      },
+      ],
     );
   }
 
-  /// 이미지 위젯 생성
+  Widget _buildImagePlaceholderContainer() {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(Icons.image_outlined, color: Colors.grey[400], size: 40),
+    );
+  }
+
+  Widget _buildImageCard(BuildContext context, String imagePath, int index) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _showImageViewer(context, _images, index),
+      child: _buildImageWidget(imagePath),
+    );
+  }
+
+  Widget _buildPageIndicator(int length) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(length, (index) {
+        final isActive = index == _currentImageIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          height: 8,
+          width: isActive ? 18 : 8,
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.orange.normal : Colors.grey[300],
+            borderRadius: BorderRadius.circular(12),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildAddressCard() {
+    final address = widget.potholeInfo.address.isNotEmpty
+        ? widget.potholeInfo.address
+        : '주소 정보가 제공되지 않았습니다.';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.location_on, size: 20, color: AppColors.orange.normal),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              address,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard() {
+    final description = widget.potholeInfo.description.isNotEmpty
+        ? widget.potholeInfo.description
+        : '도로에 깊은 포트홀이 생겨 차량이 지나가기 위험한 상황입니다.\n빠른 보수 작업을 부탁드립니다.';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Text(
+        description,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black87,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
   Widget _buildImageWidget(String imagePath) {
-    // Base64 이미지인 경우
     if (imagePath.startsWith('data:image')) {
       try {
         final base64String = imagePath.split(',')[1];
@@ -191,12 +331,11 @@ class PotholeDetailBottomSheet extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) =>
               _buildImagePlaceholder(),
         );
-      } catch (e) {
+      } catch (_) {
         return _buildImagePlaceholder();
       }
     }
 
-    // 네트워크 이미지인 경우
     if (imagePath.startsWith('http')) {
       return Image.network(
         imagePath,
@@ -207,7 +346,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
       );
     }
 
-    // 로컬 파일인 경우
     return Image.asset(
       imagePath,
       width: double.infinity,
@@ -217,7 +355,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  /// 이미지 플레이스홀더
   Widget _buildImagePlaceholder() {
     return Container(
       width: double.infinity,
@@ -227,7 +364,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
     );
   }
 
-  /// 이미지 뷰어 표시
   void _showImageViewer(
     BuildContext context,
     List<String> images,
@@ -252,7 +388,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
                 );
               },
             ),
-            // 닫기 버튼
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
               right: 16,
@@ -268,7 +403,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
                 ),
               ),
             ),
-            // 이미지 카운터
             Positioned(
               bottom: MediaQuery.of(context).padding.bottom + 20,
               left: 0,
@@ -297,69 +431,6 @@ class PotholeDetailBottomSheet extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  /// 위치 정보 섹션
-  Widget _buildLocationSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.location_on, size: 20, color: AppColors.orange.normal),
-            const SizedBox(width: 8),
-            const Text(
-              '위치 정보',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          potholeInfo.address.isNotEmpty
-              ? potholeInfo.address
-              : '제주특별시도 제주시 이도이동',
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-        ),
-      ],
-    );
-  }
-
-  /// 설명 섹션
-  Widget _buildDescriptionSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '설명',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          potholeInfo.description.isNotEmpty
-              ? potholeInfo.description
-              : '도로에 깊은 포트홀 발견 지나가기 위험한 상황입니다.\n특히 밤에는 잘 보이지 않아 사고 위험이 있습니다.\n빠른 보수 작업이 필요합니다.',
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black87,
-            height: 1.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// bottom sheet 표시 정적 메서드
-  static Future<void> show(BuildContext context, PotholeInfo potholeInfo) {
-    return showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
-      builder: (context) => PotholeDetailBottomSheet(potholeInfo: potholeInfo),
     );
   }
 }
