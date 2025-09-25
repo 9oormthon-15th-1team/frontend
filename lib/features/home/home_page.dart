@@ -325,7 +325,7 @@ class _HomePageState extends State<HomePage>
                   fit: BoxFit.cover,
                 ),
                 onPressed: () {
-                  _showPotholeReportBottomSheet();
+                  _showPhotoSelectionScreen();
                 },
                 tooltip: 'Gallery',
               ),
@@ -381,7 +381,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// 포트홀 신고 bottom sheet 표시
-  void _showPotholeReportBottomSheet() {
+  void _showPhotoSelectionScreen() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

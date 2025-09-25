@@ -40,10 +40,7 @@ class DashedBorderPainter extends CustomPainter {
     for (final pathMetric in pathMetrics) {
       double distance = 0.0;
       while (distance < pathMetric.length) {
-        final segment = pathMetric.extractPath(
-          distance,
-          distance + dashLength,
-        );
+        final segment = pathMetric.extractPath(distance, distance + dashLength);
         canvas.drawPath(segment, paint);
         distance += dashLength + gapLength;
       }
@@ -103,11 +100,7 @@ class CameraArea extends StatelessWidget {
               color: Colors.grey[100],
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.camera_alt,
-              size: 48,
-              color: Colors.grey[600],
-            ),
+            child: Icon(Icons.camera_alt, size: 48, color: Colors.grey[600]),
           ),
           const SizedBox(height: 16),
           Text(
@@ -119,13 +112,6 @@ class CameraArea extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            '탭하여 카메라나 갤러리에서 선택',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
-          ),
         ],
       ),
     );
@@ -144,10 +130,7 @@ class CameraArea extends StatelessWidget {
               width: double.infinity,
               height: double.infinity,
               child: latestImage != null
-                  ? Image.file(
-                      File(latestImage!.path),
-                      fit: BoxFit.cover,
-                    )
+                  ? Image.file(File(latestImage!.path), fit: BoxFit.cover)
                   : Container(
                       color: Colors.grey[200],
                       child: Icon(
@@ -164,10 +147,7 @@ class CameraArea extends StatelessWidget {
             bottom: 12,
             right: 12,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
