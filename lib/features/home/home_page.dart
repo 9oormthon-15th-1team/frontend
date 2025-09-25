@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/features/pothole_report/screens/photo_selection_screen.dart';
 
 import '../../core/services/logging/app_logger.dart';
+import '../../core/state/plus_menu_state.dart';
 import 'map_controller.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,11 +22,28 @@ class _HomePageState extends State<HomePage>
   final MapController _mapController = MapController();
   bool _isInitialized = false;
   Timer? _cameraChangeDebounce;
+  bool _isPlusMenuExpanded = false;
+  static const double _actionButtonSize = 48;
+  static const double _actionIconSize = _actionButtonSize * 0.6;
+  static const double _actionButtonRightPadding = 16;
+  void _onPlusMenuStateChanged() {
+    final isExpanded = PlusMenuState.isExpanded.value;
+    if (_isPlusMenuExpanded == isExpanded) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isPlusMenuExpanded = isExpanded;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    PlusMenuState.isExpanded.addListener(_onPlusMenuStateChanged);
     _initializeMap();
   }
 
@@ -90,7 +108,60 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.removeObserver(this);
     _cameraChangeDebounce?.cancel();
     _mapController.dispose();
+    PlusMenuState.isExpanded.removeListener(_onPlusMenuStateChanged);
+    PlusMenuState.isExpanded.value = false;
     super.dispose();
+  }
+
+  void _togglePlusMenu() {
+    final nextValue = !_isPlusMenuExpanded;
+    setState(() {
+      _isPlusMenuExpanded = nextValue;
+    });
+    PlusMenuState.isExpanded.value = nextValue;
+  }
+
+  void _collapsePlusMenu() {
+    if (!_isPlusMenuExpanded) return;
+    setState(() {
+      _isPlusMenuExpanded = false;
+    });
+    PlusMenuState.isExpanded.value = false;
+  }
+
+  void _handlePlusMenuLocation() {
+    _collapsePlusMenu();
+    if (!_mapController.isMapReadyNotifier.value) return;
+    _mapController.moveToCurrentLocation(context);
+  }
+
+  void _handlePlusMenuCamera() {
+    _collapsePlusMenu();
+    _showPhotoSelectionScreen();
+  }
+
+  Widget _buildPlusMenuAction({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: _actionButtonSize,
+      height: _actionButtonSize,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(_actionButtonSize / 2),
+          onTap: onTap,
+          child: Center(
+            child: Icon(
+              icon,
+              color: const Color(0xFFFF5E3A),
+              size: _actionIconSize,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -113,6 +184,16 @@ class _HomePageState extends State<HomePage>
           // 네이버 맵 (전체 화면)
           if (_isInitialized) _buildNaverMap() else _buildLoadingView(),
 
+          // 플러스 메뉴 오버레이
+          if (_isPlusMenuExpanded)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _collapsePlusMenu,
+                child: Container(color: Colors.black.withOpacity(0.4)),
+              ),
+            ),
+
           // 상단 현재 위치 표시
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
@@ -124,22 +205,29 @@ class _HomePageState extends State<HomePage>
           // 현재 위치 버튼
           Positioned(
             top: MediaQuery.of(context).padding.top + 75,
-            right: 13,
+            right: _actionButtonRightPadding,
             child: _buildCurrentLocationButton(),
           ),
 
           // 확대/축소 버튼
           Positioned(
             top: MediaQuery.of(context).padding.top + 140,
-            right: 13,
+            right: _actionButtonRightPadding,
             child: _buildZoomButtons(),
+          ),
+
+          // + 버튼
+          Positioned(
+            bottom: 20,
+            right: _actionButtonRightPadding,
+            child: _buildPlusButton(),
           ),
 
           // 하단 버튼들
           Positioned(
             bottom: 20,
             // left: 16,
-            right: 16,
+            right: _actionButtonRightPadding + _actionButtonSize + 8,
             child: _buildBottomButtons(),
           ),
         ],
@@ -181,17 +269,22 @@ class _HomePageState extends State<HomePage>
         }
 
         _cameraChangeDebounce?.cancel();
-        _cameraChangeDebounce = Timer(const Duration(milliseconds: 300), () async {
-          final controller = _mapController.mapController;
-          if (controller == null) return;
+        _cameraChangeDebounce = Timer(
+          const Duration(milliseconds: 300),
+          () async {
+            final controller = _mapController.mapController;
+            if (controller == null) return;
 
-          try {
-            final cameraPosition = await controller.getCameraPosition();
-            await _mapController.updateMarkersForZoomLevel(cameraPosition.zoom);
-          } catch (e) {
-            AppLogger.warning('카메라 위치 조회 실패', error: e);
-          }
-        });
+            try {
+              final cameraPosition = await controller.getCameraPosition();
+              await _mapController.updateMarkersForZoomLevel(
+                cameraPosition.zoom,
+              );
+            } catch (e) {
+              AppLogger.warning('카메라 위치 조회 실패', error: e);
+            }
+          },
+        );
       },
     );
   }
@@ -270,21 +363,25 @@ class _HomePageState extends State<HomePage>
     return ValueListenableBuilder<bool>(
       valueListenable: _mapController.isMapReadyNotifier,
       builder: (context, isReady, child) {
-        return FloatingActionButton(
-          onPressed: isReady
-              ? () => _mapController.moveToCurrentLocation(context)
-              : null,
-          backgroundColor: isReady ? Colors.white : Colors.grey,
-          foregroundColor: isReady ? Colors.blue : Colors.white,
-          elevation: 4,
-          mini: true,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50),
-          ),
-          child: SvgPicture.asset(
-            'assets/svg/locationButton.svg',
-            width: 100,
-            height: 100,
+        return SizedBox(
+          width: _actionButtonSize,
+          height: _actionButtonSize,
+          child: FloatingActionButton(
+            heroTag: 'current_location_button',
+            onPressed: isReady
+                ? () => _mapController.moveToCurrentLocation(context)
+                : null,
+            backgroundColor: isReady ? Colors.white : Colors.grey,
+            foregroundColor: isReady ? Colors.blue : Colors.white,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_actionButtonSize / 2),
+            ),
+            child: SvgPicture.asset(
+              'assets/svg/locationButton.svg',
+              width: _actionIconSize * 1.5,
+              height: _actionIconSize * 1.5,
+            ),
           ),
         );
       },
@@ -292,73 +389,121 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildBottomButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // 디버깅 버튼 (왼쪽)
-        // if (AppConfig.enableDebugTools)
-        //   Container(
-        //     width: 48,
-        //     height: 48,
-        //     decoration: BoxDecoration(
-        //       color: Colors.white,
-        //       borderRadius: BorderRadius.circular(50),
-        //       boxShadow: [
-        //         BoxShadow(
-        //           color: Colors.black.withValues(alpha: 0.2),
-        //           spreadRadius: 1,
-        //           blurRadius: 4,
-        //           offset: const Offset(0, 2),
-        //         ),
-        //       ],
-        //     ),
-        //     child: IconButton(
-        //       icon: const Icon(Icons.bug_report, color: Colors.orange),
-        //       onPressed: () => DebugHelper.logDeviceInfo(context),
-        //       tooltip: 'Debug Info',
-        //     ),
-        //   )
-        // else
-        //   const SizedBox(width: 56), // 디버그 버튼이 없을 때 공간 유지
-        // 갤러리 이동 버튼 (오른쪽)
-        DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                spreadRadius: 1,
-                blurRadius: 6,
-                offset: const Offset(0, 1),
-              ),
-            ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 1),
           ),
-          child: ClipOval(
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(
-                  width: 44,
-                  height: 44,
+        ],
+      ),
+      // child: ClipOval(
+      //   child: SizedBox(
+      //     width: 46,
+      //     height: 46,
+      //     child: IconButton(
+      //       padding: EdgeInsets.zero,
+      //       constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      //       iconSize: 48,
+      //       icon: SvgPicture.asset(
+      //         'assets/svg/cameraButton.svg',
+      //         width: 48,
+      //         height: 48,
+      //         fit: BoxFit.cover,
+      //       ),
+      //       onPressed: () {
+      //         _showPhotoSelectionScreen();
+      //       },
+      //       tooltip: 'Gallery',
+      //     ),
+      //   ),
+      // ),
+    );
+  }
+
+  Widget _buildPlusButton() {
+    return SizedBox(
+      width: _actionButtonSize,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: _actionButtonSize,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: _isPlusMenuExpanded
+                  ? Container(
+                      key: const ValueKey('plus-menu'),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          _actionButtonSize / 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            spreadRadius: 1,
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildPlusMenuAction(
+                            icon: Icons.location_on,
+                            onTap: _handlePlusMenuLocation,
+                          ),
+                          const SizedBox(height: 4),
+                          _buildPlusMenuAction(
+                            icon: Icons.camera_alt,
+                            onTap: _handlePlusMenuCamera,
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox(height: 0),
+            ),
+          ),
+          Container(
+            width: _actionButtonSize,
+            height: _actionButtonSize,
+            decoration: BoxDecoration(
+              color: _isPlusMenuExpanded
+                  ? Colors.white
+                  : const Color(0xFFFF5E3A),
+              borderRadius: BorderRadius.circular(_actionButtonSize / 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  spreadRadius: 1,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                iconSize: 48,
-                icon: SvgPicture.asset(
-                  'assets/svg/cameraButton.svg',
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.cover,
-                ),
-                onPressed: () {
-                  _showPhotoSelectionScreen();
-                },
-                tooltip: 'Gallery',
+              ],
+            ),
+            child: IconButton(
+              onPressed: _togglePlusMenu,
+              icon: Icon(
+                _isPlusMenuExpanded ? Icons.close : Icons.add,
+                color: _isPlusMenuExpanded
+                    ? const Color(0xFFFF5E3A)
+                    : Colors.white,
+                size: _actionIconSize,
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -366,40 +511,47 @@ class _HomePageState extends State<HomePage>
     return ValueListenableBuilder<bool>(
       valueListenable: _mapController.isMapReadyNotifier,
       builder: (context, isReady, child) {
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                spreadRadius: 1,
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: isReady ? () => _mapController.zoomIn() : null,
-                icon: Icon(
-                  Icons.add,
-                  color: isReady ? Colors.black87 : Colors.grey[400],
+        return SizedBox(
+          width: _actionButtonSize,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  spreadRadius: 1,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-                splashRadius: 22,
-              ),
-              Container(height: 1, width: 42, color: Colors.grey[200]),
-              IconButton(
-                onPressed: isReady ? () => _mapController.zoomOut() : null,
-                icon: Icon(
-                  Icons.remove,
-                  color: isReady ? Colors.black87 : Colors.grey[400],
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: isReady ? () => _mapController.zoomIn() : null,
+                  icon: Icon(
+                    Icons.add,
+                    color: isReady ? Colors.black87 : Colors.grey[400],
+                  ),
+                  splashRadius: _actionButtonSize / 2,
                 ),
-                splashRadius: 22,
-              ),
-            ],
+                Container(
+                  height: 1,
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                ),
+                IconButton(
+                  onPressed: isReady ? () => _mapController.zoomOut() : null,
+                  icon: Icon(
+                    Icons.remove,
+                    color: isReady ? Colors.black87 : Colors.grey[400],
+                  ),
+                  splashRadius: _actionButtonSize / 2,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -408,6 +560,7 @@ class _HomePageState extends State<HomePage>
 
   /// 포트홀 신고 bottom sheet 표시
   void _showPhotoSelectionScreen() {
+    _collapsePlusMenu();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/design_system.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/core/state/plus_menu_state.dart';
+import 'package:frontend/core/theme/design_system.dart';
 import 'package:go_router/go_router.dart';
 
 class MainLayout extends StatefulWidget {
@@ -24,32 +25,64 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildBottomNavigation() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: _onBottomNavTap,
-      selectedItemColor: AppColors.orange.normal,
-      unselectedItemColor: Colors.grey,
-      items: [
-        BottomNavigationBarItem(
-          icon: Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: SvgPicture.asset(
-                'assets/svg/FoldOutlineIcon.svg',
-                colorFilter: ColorFilter.mode(
-                  _currentIndex == 0 ? AppColors.orange.normal : Colors.grey,
-                  BlendMode.srcIn,
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlusMenuState.isExpanded,
+      builder: (context, isExpanded, child) {
+        final navBar = BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onBottomNavTap,
+          selectedItemColor: AppColors.orange.normal,
+          unselectedItemColor: Colors.grey,
+          items: [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: SvgPicture.asset(
+                    'assets/svg/FoldOutlineIcon.svg',
+                    colorFilter: ColorFilter.mode(
+                      _currentIndex == 0
+                          ? AppColors.orange.normal
+                          : Colors.grey,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+              ),
+              label: '지도',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.list),
+              label: '목록',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: '설정',
+            ),
+          ],
+        );
+
+        if (!isExpanded) {
+          return navBar;
+        }
+
+        return Stack(
+          children: [
+            navBar,
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => PlusMenuState.isExpanded.value = false,
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
                 ),
               ),
             ),
-          ),
-          label: '지도',
-        ),
-        const BottomNavigationBarItem(icon: Icon(Icons.list), label: '목록'),
-        const BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
-      ],
+          ],
+        );
+      },
     );
   }
 
