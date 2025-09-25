@@ -6,30 +6,17 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/tokens/app_colors.dart';
 import '../models/pothole_info.dart';
 
-/// 포트홀 상세 정보를 표시하는 bottom sheet
-class PotholeDetailBottomSheet extends StatefulWidget {
-  const PotholeDetailBottomSheet({super.key, required this.potholeInfo});
+/// 포트홀 상세 정보를 표시하는 전체 화면 페이지
+class PotholeDetailPage extends StatefulWidget {
+  const PotholeDetailPage({super.key, required this.potholeInfo});
 
   final PotholeInfo potholeInfo;
 
-  static Future<void> show(BuildContext context, PotholeInfo potholeInfo) {
-    return showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.58,
-      ),
-      builder: (context) => PotholeDetailBottomSheet(potholeInfo: potholeInfo),
-    );
-  }
-
   @override
-  State<PotholeDetailBottomSheet> createState() =>
-      _PotholeDetailBottomSheetState();
+  State<PotholeDetailPage> createState() => _PotholeDetailPageState();
 }
 
-class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
+class _PotholeDetailPageState extends State<PotholeDetailPage> {
   late final PageController _pageController;
   int _currentImageIndex = 0;
 
@@ -51,60 +38,40 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomSafe = MediaQuery.of(context).padding.bottom;
-
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          '포트홀 상세정보',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+        centerTitle: true,
       ),
-      child: SafeArea(
-        top: false,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomSafe),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 4),
-                    const Center(
-                      child: Text(
-                        '포트홀 상세정보',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildReportSummary(),
-                    const SizedBox(height: 20),
-                    _buildImageSection(context),
-                    const SizedBox(height: 16),
-                    _buildAddressCard(),
-                    const SizedBox(height: 12),
-                    _buildDescriptionCard(),
-                    _buildConditionalComplaintNumber(),
-                    const SizedBox(height: 20),
-                    _buildConditionalButtons(),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              ),
-            ),
+            _buildReportSummary(),
+            const SizedBox(height: 20),
+            _buildImageSection(context),
+            const SizedBox(height: 16),
+            _buildAddressCard(),
+            const SizedBox(height: 12),
+            _buildDescriptionCard(),
+            _buildConditionalComplaintNumber(),
+            const SizedBox(height: 20),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -152,17 +119,6 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
       ),
     ];
 
-    // rows
-    //   ..add(const SizedBox(height: 6))
-    //   ..add(
-    //     buildRow(
-    //       '민원번호',
-    //       (info.complaintId == null || info.complaintId!.isEmpty)
-    //           ? '정보 없음'
-    //           : info.complaintId!,
-    //     ),
-    //   );
-
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 
@@ -174,20 +130,11 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Text(
-        //   '이미지 (${_images.length}/6)',
-        //   style: TextStyle(
-        //     fontSize: 14,
-        //     color: Colors.grey[600],
-        //     fontWeight: FontWeight.w500,
-        //   ),
-        // ),
-        // const SizedBox(height: 12),
         if (_shouldUseSlider) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4, // 화면 높이의 40%
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _images.length,
@@ -205,21 +152,21 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
           const SizedBox(height: 12),
           _buildPageIndicator(_images.length),
         ] else
-          Row(
-            children: [
-              for (int i = 0; i < _images.length; i++) ...[
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.4, // 화면 높이의 40%
+            child: Row(
+              children: [
+                for (int i = 0; i < _images.length; i++) ...[
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
                       child: _buildImageCard(context, _images[i], i),
                     ),
                   ),
-                ),
-                if (i != _images.length - 1) const SizedBox(width: 12),
+                  if (i != _images.length - 1) const SizedBox(width: 12),
+                ],
               ],
-            ],
+            ),
           ),
       ],
     );
@@ -227,7 +174,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
 
   Widget _buildImagePlaceholderContainer() {
     return Container(
-      height: 180,
+      height: MediaQuery.of(context).size.height * 0.4, // 화면 높이의 40%
       decoration: BoxDecoration(
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(12),
@@ -298,9 +245,10 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
   Widget _buildDescriptionCard() {
     final description = widget.potholeInfo.description.isNotEmpty
         ? widget.potholeInfo.description
-        : '도로에 깊은 포트홀이 생겨 차량이 지나가기 위험한 상황입니다.\n빠른 보수 작업을 부탁드립니다.';
+        : '도로에 깊은 포트홀이 생겨 차량이 지나가기 위험한 상황입니다.\\n빠른 보수 작업을 부탁드립니다.';
 
     return Container(
+      height: 200, // 고정 높이 추가
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
@@ -460,67 +408,5 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
       );
     }
     return const SizedBox.shrink();
-  }
-
-  /// 조건부 버튼들
-  Widget _buildConditionalButtons() {
-    final isInProgress = widget.potholeInfo.status == 'in_progress';
-
-    if (isInProgress) {
-      // 처리중일 때는 "처리중" 버튼만 표시
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: null, // 비활성화
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.grey,
-            disabledForegroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 18),
-          ),
-          child: const Text(
-            '처리중',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-      );
-    } else {
-      // 처리중이 아닐 때는 "나도 봤수다!" 버튼 표시
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _onVoteButtonPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFFF5722), // 주황색
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 18),
-          ),
-          child: const Text(
-            '나도 봤수다!',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-        ),
-      );
-    }
-  }
-
-  /// 투표 버튼 클릭 처리
-  void _onVoteButtonPressed() {
-    // 투표 기능 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('투표가 등록되었습니다'),
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 }

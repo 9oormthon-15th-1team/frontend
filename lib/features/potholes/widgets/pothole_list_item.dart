@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/tokens/app_typography.dart';
 import '../../../core/models/pothole.dart';
+import '../../pothole_detail/widgets/pothole_detail_page.dart';
+import '../../pothole_detail/utils/pothole_mapper.dart';
 
 class PotholeListItem extends StatelessWidget {
   final Pothole pothole;
@@ -17,7 +19,7 @@ class PotholeListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onDetailTap,
+      onTap: () => _showPotholeDetail(context),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         margin: EdgeInsets.zero,
@@ -199,5 +201,17 @@ class PotholeListItem extends StatelessWidget {
     // TODO: Calculate actual distance using current location
     // For now, return a mock distance
     return '${(pothole.id * 0.3 + 1.5).toStringAsFixed(1)}km';
+  }
+
+  void _showPotholeDetail(BuildContext context) {
+    // Pothole을 PotholeInfo로 변환
+    final potholeInfo = PotholeMapper.fromPothole(pothole);
+
+    // 전체 화면 상세 페이지로 이동
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PotholeDetailPage(potholeInfo: potholeInfo),
+      ),
+    );
   }
 }
