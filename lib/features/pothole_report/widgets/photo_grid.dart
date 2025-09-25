@@ -82,10 +82,7 @@ class PhotoGrid extends StatelessWidget {
             // 이미지
             Center(
               child: InteractiveViewer(
-                child: Image.file(
-                  File(image.path),
-                  fit: BoxFit.contain,
-                ),
+                child: Image.file(File(image.path), fit: BoxFit.contain),
               ),
             ),
             // 닫기 버튼
@@ -100,11 +97,7 @@ class PhotoGrid extends StatelessWidget {
                     color: Colors.black54,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 24),
                 ),
               ),
             ),
@@ -155,19 +148,8 @@ class PhotoSlot extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.camera_alt_outlined,
-          size: 24,
-          color: Colors.grey[500],
-        ),
+        Icon(Icons.camera_alt_outlined, size: 24, color: Colors.grey[500]),
         const SizedBox(height: 4),
-        Text(
-          '사진',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-          ),
-        ),
       ],
     );
   }
@@ -181,16 +163,10 @@ class PhotoSlot extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: SizedBox.expand(
             child: image != null
-                ? Image.file(
-                    File(image!.path),
-                    fit: BoxFit.cover,
-                  )
+                ? Image.file(File(image!.path), fit: BoxFit.cover)
                 : Container(
                     color: Colors.grey[300],
-                    child: Icon(
-                      Icons.image,
-                      color: Colors.grey[500],
-                    ),
+                    child: Icon(Icons.image, color: Colors.grey[500]),
                   ),
           ),
         ),
@@ -207,11 +183,7 @@ class PhotoSlot extends StatelessWidget {
                 color: Colors.red,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 16,
-              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 16),
             ),
           ),
         ),

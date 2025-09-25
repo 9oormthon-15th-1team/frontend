@@ -6,7 +6,6 @@ import 'package:frontend/features/pothole_report/screens/photo_selection_screen.
 
 import '../../core/services/logging/app_logger.dart';
 import 'map_controller.dart';
-import 'widgets/pothole_report_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -385,7 +384,16 @@ class _HomePageState extends State<HomePage>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => const PhotoSelectionScreen(),
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.7,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(5),
+            topRight: Radius.circular(5),
+          ),
+          child: const PhotoSelectionScreen(),
+        ),
+      ),
     );
   }
 }

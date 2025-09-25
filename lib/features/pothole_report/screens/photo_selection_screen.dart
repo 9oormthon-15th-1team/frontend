@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:frontend/features/pothole_report/screens/photo_selection_detail.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -140,21 +141,6 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
     AppLogger.info('이미지 삭제: index $index');
   }
 
-  /// 모든 이미지 삭제 (재촬영)
-  void _retakePhotos() {
-    setState(() {
-      _photoState = _photoState.clearImages();
-    });
-
-    // 햅틱 피드백
-    HapticFeedback.mediumImpact();
-
-    AppLogger.info('모든 이미지 삭제');
-
-    // 바로 이미지 선택 다이얼로그 표시
-    _showImagePicker();
-  }
-
   /// 포트홀 신고 제출
   Future<void> _submitReport() async {
     if (_isSubmitting || !_photoState.hasImages) return;
@@ -271,6 +257,8 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
 
   /// 하단 버튼 영역
   Widget _buildBottomButtons() {
+    final hasImages = _photoState.hasImages;
+
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -282,7 +270,7 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -290,43 +278,16 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
       ),
       child: Row(
         children: [
-          // 재촬영 버튼
+          // 제출 버튼
           Expanded(
-            flex: 2,
-            child: OutlinedButton(
-              onPressed: _photoState.hasImages && !_isLoading
-                  ? _retakePhotos
-                  : null,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                side: BorderSide(
-                  color: _photoState.hasImages
-                      ? Colors.grey[400]!
-                      : Colors.grey[300]!,
-                ),
-              ),
-              child: const Text(
-                '재촬영',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // 추가 작성 버튼
-          Expanded(
-            flex: 3,
+            flex: 1,
             child: ElevatedButton(
-              onPressed: _photoState.hasImages && !_isSubmitting
-                  ? _submitReport
-                  : null,
+              onPressed: hasImages && !_isSubmitting ? _submitReport : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange.normal,
-                foregroundColor: Colors.white,
+                backgroundColor: hasImages
+                    ? AppColors.orange.normal
+                    : Colors.grey[300],
+                foregroundColor: hasImages ? Colors.white : Colors.grey[500],
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -343,7 +304,7 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
                       ),
                     )
                   : const Text(
-                      '추가 작성',
+                      '제출',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -351,8 +312,46 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
                     ),
             ),
           ),
+
+          const SizedBox(width: 16),
+
+          // 추가 작성 버튼
+          Expanded(
+            flex: 1,
+            child: ElevatedButton(
+              onPressed: _showSelectionDetail,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.orange.normal,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                '추가 작성',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _showSelectionDetail() {
+    // 먼저 바텀시트를 닫고
+    Navigator.of(context).pop();
+
+    // 닫힌 후에 새로운 화면으로 이동
+    Future.delayed(Duration.zero, () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          fullscreenDialog: true, // 전체 화면 다이얼로그처럼 표시
+          builder: (context) => const PhotoSelectionDetailScreen(),
+        ),
+      );
+    });
   }
 }
