@@ -6,6 +6,7 @@ import 'core/constants/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/services/debug/debug_helper.dart';
 import 'core/services/logging/app_logger.dart';
+import 'core/theme/design_system.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -45,10 +46,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: AppConfig.showDebugBanner,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      themeMode: ThemeMode.system,
       routerConfig: AppRouter.router,
     );
   }
