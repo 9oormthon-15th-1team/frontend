@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/models/pothole.dart';
+import '../../core/models/pothole_status.dart';
 import '../../core/services/api/pothole_api_service.dart';
 import '../../widgets/loading/loading_widget.dart';
 import 'widgets/address_input_widget.dart';
@@ -58,8 +59,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 1,
         latitude: 33.4996,
         longitude: 126.5312,
-        severity: 'high',
-        status: '신고됨',
+        status: PotholeStatus.danger,
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         description: '도로에 큰 구멍이 있어 차량 통행에 위험합니다.',
         address: '제주시 건입동 건입동로 348',
@@ -70,8 +70,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 2,
         latitude: 33.5012,
         longitude: 126.5298,
-        severity: 'medium',
-        status: '처리중',
+        status: PotholeStatus.caution,
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         description: '중간 크기의 포트홀이 발견되었습니다.',
         address: '제주시 이도1동 중앙로 125',
@@ -81,8 +80,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 3,
         latitude: 33.4988,
         longitude: 126.5325,
-        severity: 'low',
-        status: '완료',
+        status: PotholeStatus.verificationRequired,
         createdAt: DateTime.now().subtract(const Duration(days: 3)),
         description: '작은 구멍이지만 주의가 필요합니다.',
         address: '제주시 용담2동 용문로 89',
@@ -92,8 +90,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 4,
         latitude: 33.5023,
         longitude: 126.5301,
-        severity: 'high',
-        status: '신고됨',
+        status: PotholeStatus.danger,
         createdAt: DateTime.now().subtract(const Duration(hours: 6)),
         description: '아스팔트가 패여 있어 매우 위험한 상태입니다.',
         address: '제주시 일도1동 관덕로 45',
@@ -103,8 +100,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 5,
         latitude: 33.4975,
         longitude: 126.5340,
-        severity: 'medium',
-        status: '처리중',
+        status: PotholeStatus.caution,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
         description: '비가 온 후 더 심해진 포트홀입니다.',
         address: '제주시 삼도2동 삼무로 234',
@@ -114,8 +110,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
         id: 6,
         latitude: 33.5035,
         longitude: 126.5285,
-        severity: 'low',
-        status: '신고됨',
+        status: PotholeStatus.danger,
         createdAt: DateTime.now().subtract(const Duration(hours: 12)),
         description: '도로 가장자리에 작은 구멍이 있습니다.',
         address: '제주시 노형동 노연로 167',
@@ -310,22 +305,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
         return 3;
       default:
         return 0;
-    }
-  }
-
-  String _getSeverityDisplayName(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'high':
-      case 'severe':
-        return '위험';
-      case 'medium':
-      case 'moderate':
-        return '주의';
-      case 'low':
-      case 'minor':
-        return '미학인';
-      default:
-        return severity;
     }
   }
 }
