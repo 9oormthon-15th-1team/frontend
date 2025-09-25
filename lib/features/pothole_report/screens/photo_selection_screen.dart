@@ -326,6 +326,11 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    // 여기서 border 적용
+                    color: AppColors.orange.normal,
+                    width: 1,
+                  ),
                 ),
                 elevation: 0,
               ),
@@ -349,7 +354,8 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
       Navigator.of(context).push(
         MaterialPageRoute(
           fullscreenDialog: true, // 전체 화면 다이얼로그처럼 표시
-          builder: (context) => const PhotoSelectionDetailScreen(),
+          builder: (context) =>
+              PhotoSelectionDetailScreen(initialPhotoState: _photoState),
         ),
       );
     });

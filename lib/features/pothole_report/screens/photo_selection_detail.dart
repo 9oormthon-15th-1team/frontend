@@ -6,6 +6,7 @@ import 'package:frontend/core/theme/design_system.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/services/logging/app_logger.dart';
 import '../models/photo_selection_state.dart';
@@ -13,7 +14,9 @@ import '../widgets/image_picker_dialog.dart';
 import '../widgets/photo_grid.dart';
 
 class PhotoSelectionDetailScreen extends StatefulWidget {
-  const PhotoSelectionDetailScreen({super.key});
+  final PhotoSelectionState? initialPhotoState;
+
+  const PhotoSelectionDetailScreen({super.key, this.initialPhotoState});
 
   @override
   State<PhotoSelectionDetailScreen> createState() =>
@@ -22,7 +25,7 @@ class PhotoSelectionDetailScreen extends StatefulWidget {
 
 class _PhotoSelectionDetailScreenState
     extends State<PhotoSelectionDetailScreen> {
-  PhotoSelectionState _photoState = PhotoSelectionState();
+  late PhotoSelectionState _photoState;
   final ImagePicker _imagePicker = ImagePicker();
   Position? _currentPosition;
   bool _isLoading = false;
@@ -39,6 +42,7 @@ class _PhotoSelectionDetailScreenState
   @override
   void initState() {
     super.initState();
+    _photoState = widget.initialPhotoState ?? PhotoSelectionState();
     _getCurrentLocation();
   }
 
@@ -199,7 +203,6 @@ class _PhotoSelectionDetailScreenState
             _photoState = _photoState.addImages(images);
           });
 
-          // 햅틱 피드백
           HapticFeedback.selectionClick();
 
           AppLogger.info('갤러리에서 이미지 선택: ${images.length}장');
@@ -218,7 +221,6 @@ class _PhotoSelectionDetailScreenState
             _photoState = _photoState.addImage(image);
           });
 
-          // 햅틱 피드백
           HapticFeedback.selectionClick();
 
           AppLogger.info('갤러리에서 이미지 선택: ${image.path}');
@@ -240,10 +242,7 @@ class _PhotoSelectionDetailScreenState
 
   /// 민원 제출
   Future<void> _submitReport() async {
-    if (_isSubmitting ||
-        !_photoState.hasImages ||
-        !_isConsentChecked ||
-        !_isPhoneVerified) {
+    if (_isSubmitting) {
       return;
     }
 
@@ -277,24 +276,51 @@ class _PhotoSelectionDetailScreenState
   }
 
   Future<void> _submitPotholeReport() async {
-    if (_currentPosition == null) {
-      throw Exception('위치 정보를 가져올 수 없습니다');
-    }
+    try {
+      // API 요청 데이터 준비
+      final Map<String, dynamic> requestData = {
+        'description': _descriptionController.text.trim(),
+        'location': {
+          'latitude': _currentPosition?.latitude ?? 0.0,
+          'longitude': _currentPosition?.longitude ?? 0.0,
+        },
+        'phone': _phoneController.text.trim(),
+        'timestamp': DateTime.now().toIso8601String(),
+      };
 
-    // 이미지를 Base64로 인코딩 (첫 번째 이미지만 사용, 여러 이미지 지원은 추후 구현)
-    if (_photoState.hasImages) {
-      try {
+      // 이미지가 있는 경우 첫 번째 이미지를 Base64로 인코딩
+      if (_photoState.hasImages) {
         final firstImage = _photoState.selectedImages.first;
         final bytes = await firstImage.readAsBytes();
-        final imageBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-
-        // 여기에서 API 호출을 수행합니다.
-        // 예시: await apiService.submitReport(imageBase64, _currentPosition, _descriptionController.text);
-        AppLogger.info('민원 제출 데이터 준비 완료: 이미지 길이 ${imageBase64.length}');
-      } catch (e) {
-        AppLogger.error('이미지 인코딩 실패', error: e);
-        throw Exception('이미지 처리 중 오류가 발생했습니다');
+        requestData['image'] = base64Encode(bytes);
+        requestData['imageType'] = 'jpeg';
       }
+
+      AppLogger.info('민원 제출 데이터 준비 완료');
+
+      // API 호출
+      const String apiUrl = 'https://your-api-endpoint.com/api/reports';
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(requestData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        AppLogger.info('민원 제출 API 성공: ${responseData.toString()}');
+      } else {
+        AppLogger.error(
+          '민원 제출 API 실패: ${response.statusCode} - ${response.body}',
+        );
+        throw Exception('서버 응답 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      AppLogger.error('민원 제출 처리 실패', error: e);
+      rethrow;
     }
   }
 
@@ -335,10 +361,6 @@ class _PhotoSelectionDetailScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const SizedBox(width: 48), // 좌측 공간 확보
-              const Text(
-                '민원 제출',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
@@ -347,25 +369,26 @@ class _PhotoSelectionDetailScreenState
           ),
           const SizedBox(height: 16),
 
-          // 위치 섹션
-          _buildLocationSection(),
-          const SizedBox(height: 16),
-
-          // 네이버 지도 컨테이너
-          _buildMapContainer(),
-          const SizedBox(height: 24),
-
           // 사진 그리드
           PhotoGrid(
             state: _photoState,
             onTapSlot: _showImagePicker,
             onDeleteImage: _deleteImage,
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 16),
+
+          // 위치 섹션
+          _buildLocationSection(),
+          const SizedBox(height: 8),
+
+          // 네이버 지도 컨테이너
+          _buildMapContainer(),
+          const SizedBox(height: 16),
 
           // 설명 입력란
           _buildDescriptionField(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
 
           // 동의 및 인증 섹션
           _buildConsentSection(),
@@ -378,37 +401,14 @@ class _PhotoSelectionDetailScreenState
   Widget _buildLocationSection() {
     return Row(
       children: [
-        const Icon(Icons.location_on, color: Color(0xFFFF6B35), size: 20),
-        const SizedBox(width: 8),
-        const Text(
+        Text(
           '위치',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: AppTypography.bodyDefault.copyWith(
+            color: AppColors.textSecondary, // 원하는 그레이 색상
+          ),
         ),
-        const Spacer(),
-        // 사진 버튼들
-        Row(
-          children: [
-            _buildPhotoButton('사진 1'),
-            const SizedBox(width: 8),
-            _buildPhotoButton('사진 2'),
-          ],
-        ),
+        // const Icon(Icons.location_on, color: Color(0xFFFF6B35), size: 20),
       ],
-    );
-  }
-
-  /// 사진 버튼 구축
-  Widget _buildPhotoButton(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
-      ),
     );
   }
 
@@ -425,17 +425,14 @@ class _PhotoSelectionDetailScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.map, size: 48, color: Colors.grey),
-          const SizedBox(height: 8),
           const Text(
-            'Naver Map Slot',
+            'Slot',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
@@ -454,20 +451,26 @@ class _PhotoSelectionDetailScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '설명',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: AppTypography.bodyDefault.copyWith(
+            color: AppColors.textSecondary, // 원하는 그레이 색상
+          ),
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 120,
+          height: 200,
           child: TextField(
             controller: _descriptionController,
-            maxLines: 5,
+            maxLines: 20, // maxLines 제거
             style: AppTypography.caption,
             decoration: InputDecoration(
-              hintText: '내용을 직접 입력하여 신고할 기능입니다.',
+              hintText: '내용을 적지 않아도 신고가 가능합니다.',
               hintStyle: const TextStyle(color: Colors.grey),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12, // 좌우 패딩
+                vertical: 24, // 위아래 패딩
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey[300]!),
@@ -480,7 +483,6 @@ class _PhotoSelectionDetailScreenState
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Color(0xFFFF6B35)),
               ),
-              contentPadding: const EdgeInsets.all(12),
             ),
           ),
         ),
@@ -496,6 +498,7 @@ class _PhotoSelectionDetailScreenState
         // 민원 제출 동의
         Row(
           children: [
+            Text('민원제출 동의', style: AppTypography.bodySm.copyWith()),
             Checkbox(
               value: _isConsentChecked,
               onChanged: (value) {
@@ -511,10 +514,6 @@ class _PhotoSelectionDetailScreenState
               },
               activeColor: const Color(0xFFFF6B35),
             ),
-            const Text(
-              '민원 제출에 동의합니다',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
           ],
         ),
 
@@ -527,9 +526,8 @@ class _PhotoSelectionDetailScreenState
   /// 휴대전화 인증 섹션 구축
   List<Widget> _buildPhoneVerificationSection() {
     return [
-      const SizedBox(height: 16),
-
       // 전화번호 입력
+      const SizedBox(height: 8),
       Row(
         children: [
           Expanded(
@@ -538,28 +536,50 @@ class _PhotoSelectionDetailScreenState
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
                 hintText: '전화번호를 입력해주세요.',
+                hintStyle: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12, // 여기서 크기 조절
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                contentPadding: const EdgeInsets.all(12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _sendVerificationCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B35),
-              foregroundColor: Colors.white,
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _sendVerificationCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B35),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('인증'),
             ),
-            child: const Text('인증번호'),
           ),
         ],
       ),
 
       // 인증번호 입력 (발송 후에만 표시)
       if (_isVerificationSent) ...[
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -567,23 +587,48 @@ class _PhotoSelectionDetailScreenState
                 controller: _verificationCodeController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: '인증 번호',
-                  hintText: '인증 번호를 입력해주세요.',
+                  hintText: '인증번호를 입력해주세요.',
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12, // 여기서 크기 조절
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
-                  contentPadding: const EdgeInsets.all(12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: _isPhoneVerified ? null : _verifyCode,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B35),
-                foregroundColor: Colors.white,
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isPhoneVerified ? null : _verifyCode,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isPhoneVerified
+                      ? Colors.grey[300]
+                      : const Color(0xFFFF6B35),
+                  foregroundColor: _isPhoneVerified
+                      ? Colors.grey[500]
+                      : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('확인'),
               ),
-              child: const Text('확인'),
             ),
           ],
         ),
@@ -592,13 +637,13 @@ class _PhotoSelectionDetailScreenState
       // 인증 완료 메시지
       if (_isPhoneVerified) ...[
         const SizedBox(height: 8),
-        const Row(
+        Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 16),
-            SizedBox(width: 4),
+            const Icon(Icons.check_circle, color: Colors.green, size: 16),
+            const SizedBox(width: 4),
             Text(
               '인증되었습니다.',
-              style: TextStyle(
+              style: AppTypography.bodyDefault.copyWith(
                 color: Colors.green,
                 fontWeight: FontWeight.w500,
               ),
@@ -611,12 +656,6 @@ class _PhotoSelectionDetailScreenState
 
   /// 하단 버튼 영역
   Widget _buildBottomButtons() {
-    final canSubmit =
-        _photoState.hasImages &&
-        _isConsentChecked &&
-        _isPhoneVerified &&
-        !_isSubmitting;
-
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -637,12 +676,12 @@ class _PhotoSelectionDetailScreenState
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: canSubmit ? _submitReport : null,
+          onPressed: _isSubmitting ? null : _submitReport,
           style: ElevatedButton.styleFrom(
-            backgroundColor: canSubmit
-                ? const Color(0xFFFF6B35) // 주황색 #FF6B35
-                : Colors.grey[300],
-            foregroundColor: canSubmit ? Colors.white : Colors.grey[500],
+            backgroundColor: _isSubmitting
+                ? Colors.grey[300]
+                : const Color(0xFFFF6B35), // 주황색 #FF6B35
+            foregroundColor: _isSubmitting ? Colors.grey[500] : Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

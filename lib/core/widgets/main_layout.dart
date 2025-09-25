@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/design_system.dart';
 import 'package:go_router/go_router.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child;
 
-  const MainLayout({
-    super.key,
-    required this.child,
-  });
+  const MainLayout({super.key, required this.child});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -28,24 +26,18 @@ class _MainLayoutState extends State<MainLayout> {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: _onBottomNavTap,
-      selectedItemColor: const Color(0xFFFF5722),
+      selectedItemColor: AppColors.orange.normal,
       unselectedItemColor: Colors.grey,
       items: [
         BottomNavigationBarItem(
           icon: Icon(
             Icons.map,
-            color: _currentIndex == 0 ? const Color(0xFFFF5722) : Colors.grey,
+            color: _currentIndex == 0 ? AppColors.orange.normal : Colors.grey,
           ),
           label: '지도',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.list),
-          label: '목록',
-        ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: '설정',
-        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.list), label: '목록'),
+        const BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
       ],
     );
   }
