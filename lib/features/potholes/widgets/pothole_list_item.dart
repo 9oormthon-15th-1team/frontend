@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/tokens/app_typography.dart';
 import '../../../core/models/pothole.dart';
 
 class PotholeListItem extends StatelessWidget {
@@ -15,129 +16,135 @@ class PotholeListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return InkWell(
+      onTap: onDetailTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 상단 헤더 (위험 표시 + 거리)
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: _getSeverityColor(pothole.severity),
-                  child: const Icon(
-                    Icons.warning,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getSeverityDisplayName(pothole.severity),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${pothole.latitude.toStringAsFixed(6)}, ${pothole.longitude.toStringAsFixed(6)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_formatDate(pothole.createdAt)} 신고 • 상태 ${pothole.status}',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (pothole.description != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          pothole.description!,
-                          style: TextStyle(
-                            color: Colors.grey[700],
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Column(
+                // 좌측: 위험 아이콘 + "위험" 텍스트
+                Row(
                   children: [
+                    Icon(
+                      Icons.warning,
+                      size: 20,
+                      color: _getIconColor(pothole.severity),
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      _calculateDistance(pothole),
+                      _getSeverityDisplayName(pothole.severity),
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2A2A2A),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onDetailTap,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFFF5722)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '상세보기',
-                      style: TextStyle(
-                        color: Color(0xFFFF5722),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                // 우측: 거리 배지
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onNavigateTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF5722),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '길안내',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE5D6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _calculateDistance(pothole),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFFFF6B35),
                     ),
                   ),
                 ),
               ],
             ),
+
+            // 주소 정보
+            const SizedBox(height: 12),
+            Text(
+              pothole.address ??
+                  '${pothole.latitude.toStringAsFixed(6)}, ${pothole.longitude.toStringAsFixed(6)}',
+              style: AppTypography.bodyDefault,
+            ),
+
+            // 시간 정보
+            const SizedBox(height: 6),
+            Text(
+              '${_formatDate(pothole.createdAt)} 신고',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF9E9E9E),
+              ),
+            ),
+
+            // AI 설명 박스
+            if (pothole.description != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F8F8),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  pothole.description!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF5A5A5A),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Color _getIconColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'high':
+      case 'severe':
+      case '위험':
+        return const Color(0xFFE53E3E); // 빨간색 (높음)
+      case 'medium':
+      case 'moderate':
+      case '주의':
+        return const Color(0xFFF59E0B); // 노란색 (중간)
+      case 'low':
+      case 'minor':
+      case '미학인':
+        return const Color(0xFF9CA3AF); // 회색 (낮음)
+      default:
+        return const Color(0xFF9CA3AF);
+    }
   }
 
   Color _getSeverityColor(String severity) {
