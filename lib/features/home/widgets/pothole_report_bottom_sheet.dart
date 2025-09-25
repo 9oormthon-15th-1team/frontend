@@ -3,6 +3,9 @@ import 'package:frontend/core/theme/design_system.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/services/logging/app_logger.dart';
+import 'components/empty_state_widget.dart';
+import 'components/image_grid_widget.dart';
+import 'components/action_buttons_widget.dart';
 
 /// 포트홀 신고 bottom sheet 위젯
 class PotholeReportBottomSheet extends StatefulWidget {
@@ -15,13 +18,15 @@ class PotholeReportBottomSheet extends StatefulWidget {
 
 class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
   final ImagePicker _imagePicker = ImagePicker();
+  List<XFile> _selectedImages = []; // 선택된 이미지들을 저장할 리스트
+  final int _maxImages = 6; // 최대 6장까지
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.textOnPrimary,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -35,7 +40,7 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[400],
+              color: AppColors.black.lightActive,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -46,10 +51,7 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '사진 촬영',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                Text('사진 촬영', style: AppTypography.titleLg),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
@@ -59,181 +61,83 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
           ),
 
           // 진행률 표시
-          _buildProgressIndicator(),
+          const SizedBox(height: 20),
 
-          const SizedBox(height: 40),
-
-          // 카메라 아이콘
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.camera_alt, color: Colors.white, size: 40),
+          // 선택된 이미지가 없을 때와 있을 때 다른 UI 표시
+          Expanded(
+            child: _selectedImages.isEmpty
+                ? const EmptyStateWidget()
+                : ImageGridWidget(
+                    selectedImages: _selectedImages,
+                    maxImages: _maxImages,
+                    onAddImage: _showImagePickerOptions,
+                    onRemoveImage: _removeImage,
+                  ),
           ),
-
-          const SizedBox(height: 24),
-
-          // 메인 텍스트
-          const Text(
-            'z사진을 촬영해주세요',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // 서브 텍스트
-          const Text(
-            '포트홀이 잘 보이도록 촬영해주세요.\n여러 장 촬영하면 더 정확한 신고가 가능합니다.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-          ),
-
-          const Spacer(),
 
           // 버튼들
-          _buildActionButtons(),
-        ],
-      ),
-    );
-  }
-
-  /// 진행률 표시 위젯
-  Widget _buildProgressIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Container(
-            width: 80,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.orange,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Container(
-            width: 80,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Container(
-            width: 80,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Container(
-            width: 80,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
+          ActionButtonsWidget(
+            hasImages: _selectedImages.isNotEmpty,
+            onTakePhoto: _takePhotoWithCamera,
+            onSelectFromGallery: _selectFromGallery,
+            onRetake: _showImagePickerOptions,
+            onProceedNext: _proceedToNext,
           ),
         ],
       ),
     );
   }
 
-  /// 액션 버튼들
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Row(
+  /// 이미지 제거
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  /// 이미지 추가
+  void _addImage(XFile image) {
+    if (_selectedImages.length < _maxImages) {
+      setState(() {
+        _selectedImages.add(image);
+      });
+    }
+  }
+
+  /// 이미지 선택 옵션 표시
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
             children: [
-              // 카메라로 촬영 버튼
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _takePhotoWithCamera,
-                  icon: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.orange,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    '카메라로 촬영',
-                    style: TextStyle(color: Colors.orange),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.orange),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              ListTile(
+                leading: Icon(
+                  Icons.camera_alt,
+                  color: AppColors.primary.normal,
                 ),
+                title: const Text('카메라로 촬영'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _takePhotoWithCamera();
+                },
               ),
-
-              const SizedBox(width: 12),
-
-              // 갤러리 선택 버튼
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _selectFromGallery,
-                  icon: const Icon(
-                    Icons.photo_library,
-                    color: Colors.orange,
-                    size: 18,
-                  ),
-                  label: const Text(
-                    '갤러리 선택',
-                    style: TextStyle(color: Colors.orange),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.orange),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              ListTile(
+                leading: Icon(
+                  Icons.photo_library,
+                  color: AppColors.orange.normal,
                 ),
+                title: const Text('갤러리에서 선택'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _selectFromGallery();
+                },
               ),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          // 사진을 선택해주세요 버튼 (비활성화 상태)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: null, // 비활성화
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[300],
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '사진을 선택해주세요',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -248,21 +152,8 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
       );
 
       if (photo != null) {
-        if (mounted) {
-          Navigator.pop(context);
-          AppLogger.info('사진 촬영 완료: ${photo.path}');
-
-          // 사진 촬영 성공 메시지 표시
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('사진이 촬영되었습니다: ${photo.name}'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-
-        // 다음 단계로 이동 (추후 구현)
-        // TODO: 포트홀 상세 정보 입력 페이지로 이동
+        _addImage(photo);
+        AppLogger.info('사진 촬영 완료: ${photo.path}');
       } else {
         AppLogger.info('사진 촬영 취소됨');
       }
@@ -272,7 +163,7 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('카메라 사용 중 오류가 발생했습니다: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error.normal,
           ),
         );
       }
@@ -290,38 +181,38 @@ class _PotholeReportBottomSheetState extends State<PotholeReportBottomSheet> {
       );
 
       if (photo != null) {
-        if (mounted) {
-          Navigator.pop(context);
-          AppLogger.info('갤러리에서 사진 선택 완료: ${photo.path}');
-
-          // 사진 선택 성공 메시지 표시
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('사진이 선택되었습니다: ${photo.name}'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-
-        // 다음 단계로 이동 (추후 구현)
-        // TODO: 포트홀 상세 정보 입력 페이지로 이동
+        _addImage(photo);
+        AppLogger.info('갤러리에서 사진 선택 완료: ${photo.path}');
       } else {
         AppLogger.info('사진 선택 취소됨');
-        if (mounted) {
-          Navigator.pop(context);
-        }
       }
     } catch (e) {
       AppLogger.error('갤러리에서 사진 선택 실패', error: e);
       if (mounted) {
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('갤러리 사용 중 오류가 발생했습니다: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error.normal,
           ),
         );
       }
+    }
+  }
+
+  /// 다음 단계로 진행
+  void _proceedToNext() {
+    if (_selectedImages.isNotEmpty) {
+      Navigator.pop(context, _selectedImages); // 선택된 이미지들을 반환
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${_selectedImages.length}장의 사진이 선택되었습니다'),
+          backgroundColor: AppColors.primary.normal,
+        ),
+      );
+
+      // TODO: 포트홀 상세 정보 입력 페이지로 이동
+      AppLogger.info('다음 단계로 진행: ${_selectedImages.length}장의 사진 선택됨');
     }
   }
 }

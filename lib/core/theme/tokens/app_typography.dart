@@ -6,7 +6,7 @@ class AppTypography {
   // Title styles
   static const TextStyle titleLg = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 24.0,
+    fontSize: 20.0,
     fontWeight: FontWeight.w700,
     height: 1.3,
     letterSpacing: -0.2,
@@ -14,7 +14,7 @@ class AppTypography {
 
   static const TextStyle titleMd = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 20.0,
+    fontSize: 18.0,
     fontWeight: FontWeight.w600,
     height: 1.3,
     letterSpacing: -0.1,
@@ -22,8 +22,8 @@ class AppTypography {
 
   static const TextStyle titleSm = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 18.0,
-    fontWeight: FontWeight.w600,
+    fontSize: 16.0,
+    fontWeight: FontWeight.w400,
     height: 1.3,
     letterSpacing: -0.1,
   );
@@ -32,15 +32,15 @@ class AppTypography {
   static const TextStyle bodyDefault = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 16.0,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     height: 1.4,
     letterSpacing: 0.0,
   );
 
   static const TextStyle bodyDefaultBold = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 16.0,
-    fontWeight: FontWeight.w600,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w400,
     height: 1.4,
     letterSpacing: 0.0,
   );
