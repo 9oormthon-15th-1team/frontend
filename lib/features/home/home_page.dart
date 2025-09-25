@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/services/logging/app_logger.dart';
 import 'map_controller.dart';
-import 'widgets/pothole_report_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -73,8 +73,10 @@ class _HomePageState extends State<HomePage>
     try {
       // JSON 파일에서 포트홀 데이터 로드
       final markers = await _mapController.loadPotholeMarkersFromJson();
-      await _mapController.addPotholeMarkers(markers);
-      AppLogger.info('포트홀 마커 로드 완료');
+      if (mounted) {
+        await _mapController.addPotholeMarkers(markers, context: context);
+        AppLogger.info('포트홀 마커 로드 완료');
+      }
     } catch (e) {
       AppLogger.error('포트홀 마커 로드 실패', error: e);
     }
@@ -384,7 +386,45 @@ class _HomePageState extends State<HomePage>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => const PotholeReportBottomSheet(),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                '포트홀 신고',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.go('/photo-selection');
+                },
+                child: const Text('사진 촬영하러 가기'),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
