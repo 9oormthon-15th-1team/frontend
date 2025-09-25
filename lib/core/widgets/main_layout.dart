@@ -30,16 +30,19 @@ class _MainLayoutState extends State<MainLayout> {
       onTap: _onBottomNavTap,
       selectedItemColor: const Color(0xFFFF5722),
       unselectedItemColor: Colors.grey,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.map),
+          icon: Icon(
+            Icons.map,
+            color: _currentIndex == 0 ? const Color(0xFFFF5722) : Colors.grey,
+          ),
           label: '지도',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.list),
           label: '목록',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.settings),
           label: '설정',
         ),
