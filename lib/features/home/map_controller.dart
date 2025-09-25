@@ -12,7 +12,9 @@ class MapController {
   final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
     const NLatLng(37.5666805, 126.9784147), // 서울시청 기본 위치
   );
-  final ValueNotifier<String> _currentAddress = ValueNotifier<String>('위치 로딩 중...');
+  final ValueNotifier<String> _currentAddress = ValueNotifier<String>(
+    '위치 로딩 중...',
+  );
 
   /// 맵 준비 상태 notifier
   ValueNotifier<bool> get isMapReadyNotifier => _isMapReady;
@@ -124,7 +126,9 @@ class MapController {
       await _mapController!.addOverlay(marker);
       await _mapController!.addOverlay(infoWindow);
 
-      AppLogger.info('마커 추가: $title at ${position.latitude}, ${position.longitude}');
+      AppLogger.info(
+        '마커 추가: $title at ${position.latitude}, ${position.longitude}',
+      );
     } catch (e) {
       AppLogger.error('마커 추가 실패', error: e);
     }
@@ -232,7 +236,9 @@ class MapController {
           address += ' ${place.subThoroughfare!}';
         }
 
-        _currentAddress.value = address.trim().isNotEmpty ? address.trim() : '주소를 찾을 수 없습니다';
+        _currentAddress.value = address.trim().isNotEmpty
+            ? address.trim()
+            : '주소를 찾을 수 없습니다';
       } else {
         _currentAddress.value = '주소를 찾을 수 없습니다';
       }

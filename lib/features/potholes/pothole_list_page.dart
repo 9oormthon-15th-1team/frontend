@@ -4,6 +4,7 @@ import '../../core/services/api/pothole_api_service.dart';
 import '../../widgets/loading/loading_widget.dart';
 import 'widgets/address_input_widget.dart';
 import 'widgets/pothole_list_item.dart';
+import 'widgets/category_filter_widget.dart';
 
 class PotholeListPage extends StatefulWidget {
   const PotholeListPage({super.key});
@@ -12,11 +13,25 @@ class PotholeListPage extends StatefulWidget {
   State<PotholeListPage> createState() => _PotholeListPageState();
 }
 
+enum SortType {
+  distance('거리순'),
+  severity('심각도순'),
+  recent('최신순'),
+  status('상태순');
+
+  const SortType(this.displayName);
+  final String displayName;
+}
+
 class _PotholeListPageState extends State<PotholeListPage> {
   List<Pothole> potholes = [];
+  List<Pothole> filteredPotholes = [];
   bool isLoading = true;
   String? error;
   String _currentAddress = '제주특별자치도 제주시 이도2동';
+  SortType _currentSortType = SortType.distance;
+  String? _selectedSeverityFilter;
+  String? _selectedStatusFilter;
 
   @override
   void initState() {
@@ -35,12 +50,14 @@ class _PotholeListPageState extends State<PotholeListPage> {
 
       setState(() {
         potholes = fetchedPotholes;
+        _applySortingAndFiltering();
         isLoading = false;
       });
     } catch (e) {
       // API 실패 시 목업 데이터 사용
       setState(() {
         potholes = _getMockPotholes();
+        _applySortingAndFiltering();
         isLoading = false;
         error = null; // 목업 데이터로 대체하므로 에러 없음
       });
@@ -120,6 +137,14 @@ class _PotholeListPageState extends State<PotholeListPage> {
               });
             },
           ),
+          CategoryFilterWidget(
+            currentSortType: _currentSortType,
+            selectedSeverityFilter: _selectedSeverityFilter,
+            selectedStatusFilter: _selectedStatusFilter,
+            onSortChanged: _onSortChanged,
+            onSeverityFilterChanged: _onSeverityFilterChanged,
+            onStatusFilterChanged: _onStatusFilterChanged,
+          ),
           Expanded(child: _buildBody()),
         ],
       ),
@@ -162,7 +187,10 @@ class _PotholeListPageState extends State<PotholeListPage> {
       );
     }
 
-    if (potholes.isEmpty) {
+    if (filteredPotholes.isEmpty) {
+      if (potholes.isNotEmpty) {
+        return const Center(child: Text('선택한 필터 조건에 맞는 포트홀이 없습니다.'));
+      }
       return const Center(child: Text('No potholes found'));
     }
 
@@ -170,9 +198,9 @@ class _PotholeListPageState extends State<PotholeListPage> {
       onRefresh: _loadPotholes,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: potholes.length,
+        itemCount: filteredPotholes.length,
         itemBuilder: (context, index) {
-          final pothole = potholes[index];
+          final pothole = filteredPotholes[index];
           return PotholeListItem(
             pothole: pothole,
             onDetailTap: () => _onDetailTap(pothole),
@@ -189,5 +217,126 @@ class _PotholeListPageState extends State<PotholeListPage> {
 
   void _onNavigateTap(Pothole pothole) {
     // TODO: Navigate to maps with pothole location
+  }
+
+  void _onSortChanged(SortType sortType) {
+    setState(() {
+      _currentSortType = sortType;
+      _applySortingAndFiltering();
+    });
+  }
+
+  void _onSeverityFilterChanged(String? severity) {
+    setState(() {
+      _selectedSeverityFilter = severity;
+      _applySortingAndFiltering();
+    });
+  }
+
+  void _onStatusFilterChanged(String? status) {
+    setState(() {
+      _selectedStatusFilter = status;
+      _applySortingAndFiltering();
+    });
+  }
+
+  void _applySortingAndFiltering() {
+    List<Pothole> result = List.from(potholes);
+
+    // 필터링 적용
+    if (_selectedSeverityFilter != null) {
+      result = result
+          .where(
+            (pothole) =>
+                _getSeverityDisplayName(pothole.severity) ==
+                _selectedSeverityFilter,
+          )
+          .toList();
+    }
+
+    if (_selectedStatusFilter != null) {
+      result = result
+          .where((pothole) => pothole.status == _selectedStatusFilter)
+          .toList();
+    }
+
+    // 정렬 적용
+    switch (_currentSortType) {
+      case SortType.distance:
+        result.sort(
+          (a, b) =>
+              _calculateDistanceValue(a).compareTo(_calculateDistanceValue(b)),
+        );
+        break;
+      case SortType.severity:
+        result.sort(
+          (a, b) => _getSeverityPriority(
+            b.severity,
+          ).compareTo(_getSeverityPriority(a.severity)),
+        );
+        break;
+      case SortType.recent:
+        result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case SortType.status:
+        result.sort(
+          (a, b) => _getStatusPriority(
+            a.status,
+          ).compareTo(_getStatusPriority(b.status)),
+        );
+        break;
+    }
+
+    filteredPotholes = result;
+  }
+
+  double _calculateDistanceValue(Pothole pothole) {
+    // 목업 거리 계산 (실제로는 현재 위치와의 거리를 계산해야 함)
+    return pothole.id * 0.3 + 1.5;
+  }
+
+  int _getSeverityPriority(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'high':
+      case 'severe':
+        return 3;
+      case 'medium':
+      case 'moderate':
+        return 2;
+      case 'low':
+      case 'minor':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  int _getStatusPriority(String status) {
+    switch (status) {
+      case '신고됨':
+        return 1;
+      case '처리중':
+        return 2;
+      case '완료':
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  String _getSeverityDisplayName(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'high':
+      case 'severe':
+        return '위험';
+      case 'medium':
+      case 'moderate':
+        return '주의';
+      case 'low':
+      case 'minor':
+        return '미학인';
+      default:
+        return severity;
+    }
   }
 }
