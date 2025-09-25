@@ -1025,61 +1025,212 @@ class MapController {
     final currentPos = _currentPosition.value;
 
     final sampleData = [
-      // 개별 포트홀 마커들
+      // 높은 위험도 포트홀들 (빨간색 마커)
       PotholeMarker.individual(
         PotholeData(
-          id: 'p1',
+          id: 'high_p1',
           latitude: currentPos.latitude + 0.001,
           longitude: currentPos.longitude + 0.001,
           riskLevel: PotholeRiskLevel.high,
-          description: '큰 포트홀',
-          reportedAt: DateTime.now(),
+          description: '심각한 포트홀 - 차량 파손 위험',
+          reportedAt: DateTime.now().subtract(const Duration(days: 1)),
           status: 'high',
-          complaintId: 'SAMPLE-1001',
+          complaintId: 'HIGH-1001',
         ),
       ),
       PotholeMarker.individual(
         PotholeData(
-          id: 'p2',
+          id: 'high_p2',
+          latitude: currentPos.latitude + 0.0015,
+          longitude: currentPos.longitude - 0.0008,
+          riskLevel: PotholeRiskLevel.high,
+          description: '깊은 포트홀, 즉시 보수 필요',
+          reportedAt: DateTime.now().subtract(const Duration(hours: 6)),
+          status: 'high',
+          complaintId: 'HIGH-1002',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'high_p3',
+          latitude: currentPos.latitude - 0.0012,
+          longitude: currentPos.longitude + 0.0018,
+          riskLevel: PotholeRiskLevel.high,
+          description: '대형 포트홀, 교통 통제 검토 필요',
+          reportedAt: DateTime.now().subtract(const Duration(days: 2)),
+          status: 'high',
+          complaintId: 'HIGH-1003',
+        ),
+      ),
+
+      // 중간 위험도 포트홀들 (주황색 마커)
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'medium_p1',
           latitude: currentPos.latitude - 0.001,
           longitude: currentPos.longitude + 0.0005,
           riskLevel: PotholeRiskLevel.medium,
-          description: '중간 포트홀',
-          reportedAt: DateTime.now(),
+          description: '중간 크기 포트홀',
+          reportedAt: DateTime.now().subtract(const Duration(days: 3)),
           status: 'medium',
-          complaintId: 'SAMPLE-1002',
+          complaintId: 'MED-1001',
         ),
       ),
       PotholeMarker.individual(
         PotholeData(
-          id: 'p3',
+          id: 'medium_p2',
+          latitude: currentPos.latitude + 0.0008,
+          longitude: currentPos.longitude - 0.0015,
+          riskLevel: PotholeRiskLevel.medium,
+          description: '도로면 손상, 보수 작업 예정',
+          reportedAt: DateTime.now().subtract(const Duration(days: 1, hours: 12)),
+          status: 'medium',
+          complaintId: 'MED-1002',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'medium_p3',
+          latitude: currentPos.latitude - 0.0018,
+          longitude: currentPos.longitude - 0.0005,
+          riskLevel: PotholeRiskLevel.medium,
+          description: '아스팔트 균열 확대',
+          reportedAt: DateTime.now().subtract(const Duration(hours: 18)),
+          status: 'medium',
+          complaintId: 'MED-1003',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'medium_p4',
+          latitude: currentPos.latitude + 0.0005,
+          longitude: currentPos.longitude + 0.0012,
+          riskLevel: PotholeRiskLevel.medium,
+          description: '차선 경계 포트홀',
+          reportedAt: DateTime.now().subtract(const Duration(days: 4)),
+          status: 'medium',
+          complaintId: 'MED-1004',
+        ),
+      ),
+
+      // 낮은 위험도 포트홀들 (노란색 마커)
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'low_p1',
           latitude: currentPos.latitude + 0.0005,
           longitude: currentPos.longitude - 0.001,
           riskLevel: PotholeRiskLevel.low,
           description: '작은 포트홀',
-          reportedAt: DateTime.now(),
+          reportedAt: DateTime.now().subtract(const Duration(days: 5)),
           status: 'small',
-          complaintId: 'SAMPLE-1003',
+          complaintId: 'LOW-1001',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'low_p2',
+          latitude: currentPos.latitude - 0.0005,
+          longitude: currentPos.longitude - 0.001,
+          riskLevel: PotholeRiskLevel.low,
+          description: '표면 거칠음',
+          reportedAt: DateTime.now().subtract(const Duration(days: 6)),
+          status: 'small',
+          complaintId: 'LOW-1002',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'low_p3',
+          latitude: currentPos.latitude + 0.002,
+          longitude: currentPos.longitude - 0.0005,
+          riskLevel: PotholeRiskLevel.low,
+          description: '경미한 도로 손상',
+          reportedAt: DateTime.now().subtract(const Duration(days: 7)),
+          status: 'small',
+          complaintId: 'LOW-1003',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'low_p4',
+          latitude: currentPos.latitude - 0.002,
+          longitude: currentPos.longitude + 0.0008,
+          riskLevel: PotholeRiskLevel.low,
+          description: '노면 표시선 근처 손상',
+          reportedAt: DateTime.now().subtract(const Duration(days: 8)),
+          status: 'small',
+          complaintId: 'LOW-1004',
+        ),
+      ),
+      PotholeMarker.individual(
+        PotholeData(
+          id: 'low_p5',
+          latitude: currentPos.latitude + 0.0012,
+          longitude: currentPos.longitude + 0.0015,
+          riskLevel: PotholeRiskLevel.low,
+          description: '인도 근처 작은 균열',
+          reportedAt: DateTime.now().subtract(const Duration(days: 10)),
+          status: 'small',
+          complaintId: 'LOW-1005',
         ),
       ),
 
-      // 클러스터 마커들
+      // 다양한 위험도 클러스터들
       PotholeMarker.cluster(
         PotholeCluster(
-          id: 'c1',
+          id: 'cluster_high',
           latitude: currentPos.latitude - 0.002,
           longitude: currentPos.longitude - 0.002,
-          count: 5,
-          potholes: [], // 실제로는 포트홀 데이터 리스트
+          count: 8,
+          potholes: [
+            PotholeData(
+              id: 'cluster_high_1',
+              latitude: currentPos.latitude - 0.002,
+              longitude: currentPos.longitude - 0.002,
+              riskLevel: PotholeRiskLevel.high,
+              description: '클러스터 내 고위험 포트홀',
+              reportedAt: DateTime.now(),
+              status: 'high',
+            ),
+          ],
         ),
       ),
       PotholeMarker.cluster(
         PotholeCluster(
-          id: 'c2',
-          latitude: currentPos.latitude + 0.002,
-          longitude: currentPos.longitude + 0.002,
+          id: 'cluster_medium',
+          latitude: currentPos.latitude + 0.0025,
+          longitude: currentPos.longitude + 0.0025,
+          count: 5,
+          potholes: [
+            PotholeData(
+              id: 'cluster_med_1',
+              latitude: currentPos.latitude + 0.0025,
+              longitude: currentPos.longitude + 0.0025,
+              riskLevel: PotholeRiskLevel.medium,
+              description: '클러스터 내 중위험 포트홀',
+              reportedAt: DateTime.now(),
+              status: 'medium',
+            ),
+          ],
+        ),
+      ),
+      PotholeMarker.cluster(
+        PotholeCluster(
+          id: 'cluster_low',
+          latitude: currentPos.latitude - 0.003,
+          longitude: currentPos.longitude + 0.003,
           count: 12,
-          potholes: [], // 실제로는 포트홀 데이터 리스트
+          potholes: [
+            PotholeData(
+              id: 'cluster_low_1',
+              latitude: currentPos.latitude - 0.003,
+              longitude: currentPos.longitude + 0.003,
+              riskLevel: PotholeRiskLevel.low,
+              description: '클러스터 내 저위험 포트홀',
+              reportedAt: DateTime.now(),
+              status: 'small',
+            ),
+          ],
         ),
       ),
     ];

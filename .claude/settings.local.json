@@ -9,7 +9,10 @@
       "Bash(git stash:*)",
       "Bash(flutter analyze:*)",
       "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_pBueW0/**)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(flutter:*)"
     ],
     "deny": [],
     "ask": []

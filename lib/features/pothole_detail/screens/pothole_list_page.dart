@@ -58,31 +58,64 @@ class _PotholeListPageState extends State<PotholeListPage> {
       'assets/images/waring.png',
     ];
 
-    return List.generate(15, (index) {
-      final random = DateTime.now().millisecond % 3;
+    // 다양한 상태와 심각도로 더 현실적인 데이터 생성
+    final mockDataConfig = [
+      // 높은 심각도 (high) - 빨간색
+      {'status': 'pending', 'severity': 'high', 'description': '심각한 포트홀 - 차량 파손 위험', 'images': 3},
+      {'status': 'in_progress', 'severity': 'high', 'description': '대형 포트홀, 응급 보수 작업 진행중', 'images': 2},
+      {'status': 'pending', 'severity': 'high', 'description': '깊은 포트홀로 인한 교통사고 위험', 'images': 3},
+
+      // 중간 심각도 (medium) - 주황색
+      {'status': 'pending', 'severity': 'medium', 'description': '중간 크기 포트홀, 보수 작업 필요', 'images': 2},
+      {'status': 'in_progress', 'severity': 'medium', 'description': '도로면 손상, 보수 작업 예정', 'images': 1},
+      {'status': 'completed', 'severity': 'medium', 'description': '아스팔트 균열 확대로 인한 포트홀', 'images': 2},
+      {'status': 'pending', 'severity': 'medium', 'description': '차선 경계 부근 포트홀', 'images': 1},
+      {'status': 'in_progress', 'severity': 'medium', 'description': '우천시 물고임 발생 지역', 'images': 3},
+
+      // 낮은 심각도 (low) - 노란색
+      {'status': 'pending', 'severity': 'low', 'description': '작은 포트홀, 예방 차원의 보수', 'images': 1},
+      {'status': 'completed', 'severity': 'low', 'description': '표면 거칠음 개선 완료', 'images': 1},
+      {'status': 'pending', 'severity': 'low', 'description': '경미한 도로 표면 손상', 'images': 2},
+      {'status': 'completed', 'severity': 'low', 'description': '인도 접경 부위 작은 균열', 'images': 1},
+      {'status': 'pending', 'severity': 'low', 'description': '노면 표시선 근처 손상', 'images': 1},
+
+      // 완료된 케이스들
+      {'status': 'completed', 'severity': 'high', 'description': '긴급 보수 작업 완료', 'images': 2},
+      {'status': 'completed', 'severity': 'medium', 'description': '정기 도로 보수 작업 완료', 'images': 1},
+    ];
+
+    return List.generate(mockDataConfig.length, (index) {
+      final config = mockDataConfig[index];
+      final dayOffset = index + 1;
+
       return PotholeInfo(
         id: 'pothole_${index + 1}',
-        title: '포트홀 신고 #${index + 1}',
-        description:
-            '도로에 ${['작은', '중간 크기의', '큰'][random]} 포트홀이 발견되었습니다. ${['보수 작업이 필요합니다.', '안전에 위험할 수 있습니다.', '차량 통행에 지장을 주고 있습니다.'][random]}',
-        latitude: 33.5142 + (index * 0.001),
-        longitude: 126.5292 + (index * 0.001),
-        address:
-            '제주특별시도 제주시 ${['이도일동', '이도이동', '일도일동', '일도이동'][index % 4]} ${100 + index}번지',
+        title: '포트홀 신고 #${(index + 1).toString().padLeft(3, '0')}',
+        description: config['description'] as String,
+        latitude: 33.5142 + (index * 0.0008), // 더 넓게 분산
+        longitude: 126.5292 + (index * 0.0012),
+        address: '제주특별시도 제주시 ${[
+          '이도일동', '이도이동', '일도일동', '일도이동',
+          '연동', '노형동', '외도일동', '외도이동'
+        ][index % 8]} ${(100 + index * 3)}${index % 2 == 0 ? '' : '-${(index % 5) + 1}'}번지',
         createdAt: DateTime.now().subtract(
-          Duration(days: index, hours: index % 24),
+          Duration(days: dayOffset, hours: (index * 3) % 24),
         ),
-        images: baseImages.take((index % 3) + 1).toList(),
-        status: ['pending', 'in_progress', 'completed'][index % 3],
-        severity: ['low', 'medium', 'high'][index % 3],
+        images: baseImages.take(config['images'] as int).toList(),
+        status: config['status'] as String,
+        severity: config['severity'] as String,
         firstReportedAt: DateTime.now().subtract(
-          Duration(days: index + 2, hours: (index + 5) % 24),
+          Duration(days: dayOffset + (index % 3) + 1, hours: (index + 8) % 24),
         ),
         latestReportedAt: DateTime.now().subtract(
-          Duration(days: index, hours: index % 12),
+          Duration(days: dayOffset, hours: (index + 2) % 24),
         ),
-        reportCount: (index % 4) + 1,
-        complaintId: '2024-${1200 + index}',
+        reportCount: (index % 5) + 1, // 1-5번의 신고
+        complaintId: config['status'] == 'completed'
+          ? 'COMP-2024-${(1200 + index).toString()}'
+          : config['severity'] == 'high'
+            ? 'URGENT-2024-${(1200 + index).toString()}'
+            : '2024-${(1200 + index).toString()}',
       );
     });
   }
