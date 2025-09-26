@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:frontend/core/models/pothole_status.dart';
+import 'package:porthole_in_jeju/core/models/pothole_status.dart';
 
 /// 포트홀 상세 정보 모델
 class PotholeInfo {

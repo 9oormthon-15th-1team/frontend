@@ -3,7 +3,7 @@
 //   shared_preferences: ^2.2.2
 
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/design_system.dart';
+import 'package:porthole_in_jeju/core/theme/design_system.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/onboarding_content.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
+import 'package:porthole_in_jeju/core/theme/tokens/app_typography.dart';
 import '../../../core/models/pothole.dart';
 import '../../pothole_detail/widgets/pothole_detail_page.dart';
 import '../../pothole_detail/utils/pothole_mapper.dart';
@@ -87,8 +87,9 @@ class PotholeListItem extends StatelessWidget {
             // 주소 정보
             const SizedBox(height: 12),
             Text(
-              pothole.address ??
-                  '${pothole.latitude.toStringAsFixed(6)}, ${pothole.longitude.toStringAsFixed(6)}',
+              pothole.address.isNotEmpty
+                  ? pothole.address
+                  : '${pothole.latitude.toStringAsFixed(6)}, ${pothole.longitude.toStringAsFixed(6)}',
               style: AppTypography.bodyDefault,
             ),
 
@@ -104,7 +105,7 @@ class PotholeListItem extends StatelessWidget {
             ),
 
             // AI 설명 박스
-            if (pothole.description != null) ...[
+            if (pothole.description.isNotEmpty) ...[
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
@@ -114,7 +115,7 @@ class PotholeListItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  pothole.description!,
+                  pothole.description,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,

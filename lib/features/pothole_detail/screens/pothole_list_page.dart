@@ -38,13 +38,15 @@ class _PotholeListPageState extends State<PotholeListPage> {
       setState(() {
         _potholes = potholes.map((p) => PotholeInfo(
               id: p.id.toString(),
-              title: p.address ?? '',
-              description: p.description ?? '',
+              title: p.address,
+              description: p.description.isNotEmpty
+                  ? p.description
+                  : p.aiSummary ?? '포트홀이 발견되었습니다.',
               latitude: p.latitude,
               longitude: p.longitude,
-              address: p.address ?? '',
+              address: p.address,
               createdAt: p.createdAt,
-              images: [],
+              images: p.images,
               status: p.status,
               firstReportedAt: p.createdAt,
               latestReportedAt: p.createdAt,

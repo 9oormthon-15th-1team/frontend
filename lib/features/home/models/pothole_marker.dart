@@ -1,5 +1,5 @@
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-import 'package:frontend/core/models/pothole_status.dart';
+import 'package:porthole_in_jeju/core/models/pothole_status.dart';
 
 /// 포트홀 마커 타입
 enum PotholeMarkerType {
@@ -24,9 +24,10 @@ class PotholeData {
   final PotholeRiskLevel riskLevel;
   final String description;
   final DateTime reportedAt;
-  final String? imageUrl;
   final PotholeStatus status;
   final String? complaintId;
+  final List<String> imageUrls;
+  final String address;
 
   const PotholeData({
     required this.id,
@@ -35,14 +36,17 @@ class PotholeData {
     required this.riskLevel,
     required this.description,
     required this.reportedAt,
-    this.imageUrl,
     // FIXME: 기본값 임시 설정
     this.status = PotholeStatus.caution,
     this.complaintId,
+    this.imageUrls = const [],
+    this.address = '',
   });
 
   /// 위치 정보를 NLatLng로 변환
   NLatLng get position => NLatLng(latitude, longitude);
+
+  String? get primaryImageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
 
   factory PotholeData.fromJson(Map<String, dynamic> json) {
     return PotholeData(
@@ -55,10 +59,42 @@ class PotholeData {
       ),
       description: json['description'] as String,
       reportedAt: DateTime.parse(json['reportedAt'] as String),
-      imageUrl: json['imageUrl'] as String?,
       status: PotholeStatus.fromServerValue(json['status']),
       complaintId: json['complaintId']?.toString(),
+      imageUrls: _parseImageList(json['imageUrls'] ?? json['images']),
+      address: _parseOptionalString(json['address']),
     );
+  }
+
+  static List<String> _parseImageList(dynamic value) {
+    if (value == null) return const [];
+    if (value is List) {
+      return value
+          .where((element) => element != null)
+          .map((element) => element.toString())
+          .where((element) => element.trim().isNotEmpty)
+          .toList();
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      if (value.contains(',')) {
+        return value
+            .split(',')
+            .map((element) => element.trim())
+            .where((element) => element.isNotEmpty)
+            .toList();
+      }
+      return [value.trim()];
+    }
+    return const [];
+  }
+
+  static String _parseOptionalString(dynamic value) {
+    if (value == null) return '';
+    final result = value.toString().trim();
+    if (result.isEmpty || result.toLowerCase() == 'null') {
+      return '';
+    }
+    return result;
   }
 }
 

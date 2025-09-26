@@ -11,7 +11,7 @@
     <!-- Camera feature (optional but recommended) -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
-        android:label="frontend"
+        android:label="Porthole in Jeju"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

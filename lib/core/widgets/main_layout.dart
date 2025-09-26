@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/state/plus_menu_state.dart';
-import 'package:frontend/core/theme/design_system.dart';
+import 'package:porthole_in_jeju/core/state/plus_menu_state.dart';
+import 'package:porthole_in_jeju/core/theme/design_system.dart';
 import 'package:go_router/go_router.dart';
 
 class MainLayout extends StatefulWidget {

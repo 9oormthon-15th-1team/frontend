@@ -1,4 +1,4 @@
-package com.example.frontend
+package training.goorm.portholeinjeju
 
 import io.flutter.embedding.android.FlutterActivity
 

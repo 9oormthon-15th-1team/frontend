@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/design_system.dart';
+import 'package:porthole_in_jeju/core/theme/design_system.dart';
 
 class ReportConsentInput extends StatefulWidget {
   const ReportConsentInput({super.key});

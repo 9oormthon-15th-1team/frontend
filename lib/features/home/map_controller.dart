@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-import 'package:frontend/core/models/pothole_status.dart';
+import 'package:porthole_in_jeju/core/models/pothole_status.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/models/pothole.dart';
+import '../../core/services/api/pothole_api_service.dart';
 import '../../core/services/logging/app_logger.dart';
 import '../pothole_detail/models/pothole_info.dart';
 import '../pothole_detail/widgets/pothole_detail_bottom_sheet.dart';
@@ -14,6 +16,13 @@ import 'models/pothole_marker.dart';
 
 /// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
 class MapController {
+  static const double _defaultSearchDistance = 100000000;
+  static const List<String> _fallbackDetailImages = [
+    'assets/images/danger.png',
+    'assets/images/general.png',
+    'assets/images/waring.png',
+  ];
+
   NaverMapController? _mapController;
   final ValueNotifier<bool> _isMapReady = ValueNotifier<bool>(false);
   final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
@@ -787,28 +796,29 @@ class MapController {
           final pothole = marker.potholeData!;
           AppLogger.info('포트홀 데이터 처리 시작: ${pothole.id}');
 
-          // PotholeMarker를 PotholeInfo로 변환
-          final List<String> sampleImages = [
-            'assets/images/danger.png',
-            'assets/images/general.png',
-            'assets/images/waring.png',
-          ];
+          final images = pothole.imageUrls.isNotEmpty
+              ? pothole.imageUrls
+              : _fallbackDetailImages;
 
-          // 랜덤하게 1-3개의 이미지 선택
-          final random = DateTime.now().millisecond % 3;
-          final selectedImages = sampleImages.take(random + 1).toList();
+          final description = pothole.description.isNotEmpty
+              ? pothole.description
+              : pothole.address.isNotEmpty
+                  ? '도로 상태: ${pothole.address}'
+                  : '도로에 포트홀이 발견되었습니다. 안전에 주의하세요.';
+
+          final address = pothole.address.isNotEmpty
+              ? pothole.address
+              : _currentAddress.value;
 
           final potholeInfo = PotholeInfo(
             id: pothole.id,
             title: '포트홀 신고 #${pothole.id}',
-            description: pothole.description.isNotEmpty
-                ? pothole.description
-                : '도로에 포트홀이 발견되었습니다. 안전에 위험할 수 있으므로 주의가 필요합니다.',
+            description: description,
             latitude: marker.position.latitude,
             longitude: marker.position.longitude,
-            address: '제주특별시도 제주시 이도이동', // 임시 주소
+            address: address,
             createdAt: pothole.reportedAt,
-            images: selectedImages,
+            images: images,
             status: pothole.status,
             firstReportedAt: pothole.reportedAt,
             latestReportedAt: pothole.reportedAt,
@@ -916,6 +926,125 @@ class MapController {
     AppLogger.info('줌 레벨 $zoomLevel 변경 감지 - 네이버 맵 클러스터링이 자동으로 처리됩니다');
   }
 
+  /// API에서 포트홀 데이터 로드
+  Future<List<PotholeMarker>> loadPotholeMarkersFromApi({
+    double? latitude,
+    double? longitude,
+    double? distance,
+  }) async {
+    final targetLat = latitude ?? _currentPosition.value.latitude;
+    final targetLng = longitude ?? _currentPosition.value.longitude;
+    final searchDistance = distance ?? _defaultSearchDistance;
+
+    AppLogger.info(
+      'API 기반 포트홀 데이터 로드 시작 - lat: $targetLat, lng: $targetLng, distance: $searchDistance',
+    );
+
+    try {
+      final potholes = await PotholeApiService.getPotholesByLocation(
+        latitude: targetLat,
+        longitude: targetLng,
+        distance: searchDistance,
+      );
+
+      if (potholes.isEmpty) {
+        AppLogger.warning('API에서 포트홀 데이터를 찾지 못했습니다');
+        return [];
+      }
+
+      final markers = <PotholeMarker>[];
+      for (final pothole in potholes) {
+        try {
+          markers.add(_buildMarkerFromPothole(pothole));
+        } catch (e, stackTrace) {
+          AppLogger.error(
+            '포트홀 데이터를 마커로 변환하는 데 실패: ${pothole.id}',
+            error: e,
+            stackTrace: stackTrace,
+          );
+        }
+      }
+
+      AppLogger.info('API에서 포트홀 마커 ${markers.length}개 로드 완료');
+      return markers;
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'API 기반 포트홀 데이터 로드 실패',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// API를 사용해 현재 표시 중인 포트홀 마커를 갱신
+  Future<void> refreshPotholeMarkersFromApi({
+    BuildContext? context,
+    double? latitude,
+    double? longitude,
+    double? distance,
+  }) async {
+    try {
+      final markers = await loadPotholeMarkersFromApi(
+        latitude: latitude,
+        longitude: longitude,
+        distance: distance,
+      );
+
+      if (markers.isEmpty) {
+        AppLogger.warning('API에서 포트홀 마커가 없어 기존 마커를 제거합니다');
+        _potholeMarkers.clear();
+        await _clearPotholeMarkers();
+        return;
+      }
+
+      await addPotholeMarkers(markers, context: context);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'API 기반 포트홀 마커 갱신 실패',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  PotholeMarker _buildMarkerFromPothole(Pothole pothole) {
+    final lat = pothole.latitude;
+    final lng = pothole.longitude;
+
+    if (lat.abs() > 90 || lng.abs() > 180) {
+      throw ArgumentError('유효하지 않은 포트홀 좌표: ${pothole.id}');
+    }
+
+    String description = '제보된 포트홀입니다.';
+    for (final candidate in [
+      pothole.description,
+      pothole.aiSummary,
+      pothole.address,
+    ]) {
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        description = candidate.trim();
+        break;
+      }
+    }
+
+    final potholeData = PotholeData(
+      id: pothole.id.toString(),
+      latitude: lat,
+      longitude: lng,
+      riskLevel: _mapStatusToRiskLevel(pothole.status),
+      description: description,
+      reportedAt: pothole.createdAt,
+      status: pothole.status,
+      complaintId: pothole.complaintId?.toString(),
+      imageUrls: pothole.images,
+      address: pothole.address,
+    );
+
+    return PotholeMarker.individual(potholeData);
+  }
+
   /// JSON 파일에서 포트홀 데이터 로드
   Future<List<PotholeMarker>> loadPotholeMarkersFromJson() async {
     final List<PotholeMarker> allMarkers = [];
@@ -952,6 +1081,8 @@ class MapController {
                     DateTime.now(),
                 status: potholeData['status'] ?? PotholeStatus.danger,
                 complaintId: potholeData['complaintId']?.toString(),
+                imageUrls: _parseImageList(potholeData['images']),
+                address: _parseOptionalString(potholeData['address']),
               );
               allMarkers.add(PotholeMarker.individual(pothole));
               AppLogger.info('pothole_data.json에서 포트홀 ${pothole.id} 파싱 완료');
@@ -1051,6 +1182,8 @@ class MapController {
       reportedAt: DateTime.tryParse(json['reportedAt'] ?? '') ?? DateTime.now(),
       status: json['status'] ?? PotholeStatus.verificationRequired,
       complaintId: json['complaintId']?.toString(),
+      imageUrls: _parseImageList(json['images'] ?? json['imageUrls']),
+      address: _parseOptionalString(json['address']),
     );
   }
 
@@ -1076,6 +1209,48 @@ class MapController {
       default:
         return PotholeRiskLevel.low;
     }
+  }
+
+  PotholeRiskLevel _mapStatusToRiskLevel(PotholeStatus status) {
+    switch (status) {
+      case PotholeStatus.danger:
+        return PotholeRiskLevel.high;
+      case PotholeStatus.caution:
+        return PotholeRiskLevel.medium;
+      case PotholeStatus.verificationRequired:
+        return PotholeRiskLevel.low;
+    }
+  }
+
+  List<String> _parseImageList(dynamic value) {
+    if (value == null) return const [];
+    if (value is List) {
+      return value
+          .where((element) => element != null)
+          .map((element) => element.toString())
+          .where((element) => element.trim().isNotEmpty)
+          .toList();
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      if (value.contains(',')) {
+        return value
+            .split(',')
+            .map((element) => element.trim())
+            .where((element) => element.isNotEmpty)
+            .toList();
+      }
+      return [value.trim()];
+    }
+    return const [];
+  }
+
+  String _parseOptionalString(dynamic value) {
+    if (value == null) return '';
+    final result = value.toString().trim();
+    if (result.isEmpty || result.toLowerCase() == 'null') {
+      return '';
+    }
+    return result;
   }
 
   /// 샘플 포트홀 데이터 생성 (테스트용 - fallback)

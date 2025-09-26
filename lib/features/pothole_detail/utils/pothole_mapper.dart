@@ -8,12 +8,14 @@ class PotholeMapper {
     return PotholeInfo(
       id: pothole.id.toString(),
       title: '포트홀 신고 #${pothole.id}',
-      description: pothole.description ?? pothole.aiSummary ?? '포트홀이 발견되었습니다.',
+      description: pothole.description.isNotEmpty
+          ? pothole.description
+          : pothole.aiSummary ?? '포트홀이 발견되었습니다.',
       latitude: pothole.latitude,
       longitude: pothole.longitude,
-      address: pothole.address ?? '',
+      address: pothole.address,
       createdAt: pothole.createdAt,
-      images: [], // 기본적으로 빈 이미지 리스트
+      images: pothole.images,
       status: pothole.status,
       firstReportedAt: pothole.createdAt,
       latestReportedAt: pothole.createdAt,

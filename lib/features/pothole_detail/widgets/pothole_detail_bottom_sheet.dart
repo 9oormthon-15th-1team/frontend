@@ -485,7 +485,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
             padding: const EdgeInsets.symmetric(vertical: 18),
           ),
           child: const Text(
-            '처리중',
+            '손보고 이서요',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),

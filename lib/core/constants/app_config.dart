@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../services/logging/app_logger.dart';
 
 class AppConfig {
-  static const String appName = 'Frontend';
+  static const String appName = 'Porthole in Jeju';
   static const String version = '1.0.0';
 
   // Environment

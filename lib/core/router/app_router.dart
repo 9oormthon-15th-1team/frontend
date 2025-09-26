@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/potholes/pothole_list_page.dart';
+import 'package:porthole_in_jeju/features/potholes/pothole_list_page.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/splash/splash_page.dart';

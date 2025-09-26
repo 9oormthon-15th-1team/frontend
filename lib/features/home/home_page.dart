@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/features/pothole_report/screens/photo_selection_screen.dart';
+import 'package:porthole_in_jeju/features/pothole_report/screens/photo_selection_screen.dart';
 
 import '../../core/services/logging/app_logger.dart';
 import '../../core/state/plus_menu_state.dart';
@@ -62,6 +62,8 @@ class _HomePageState extends State<HomePage>
       // 페이지 복귀 시에는 맵을 이동하지 않고 위치만 업데이트
       if (!mounted) return;
       await _mapController.getCurrentLocation(context: context, moveMap: false);
+      if (!mounted) return;
+      await _loadPotholeMarkers();
       AppLogger.info('현재 위치 업데이트 완료');
     } catch (e) {
       AppLogger.error('현재 위치 업데이트 실패', error: e);
@@ -91,15 +93,27 @@ class _HomePageState extends State<HomePage>
 
   /// 포트홀 마커 로드
   Future<void> _loadPotholeMarkers() async {
+    if (!mounted) return;
+
     try {
-      // JSON 파일에서 포트홀 데이터 로드
-      final markers = await _mapController.loadPotholeMarkersFromJson();
-      if (mounted) {
+      final markers = await _mapController.loadPotholeMarkersFromApi();
+      if (markers.isNotEmpty) {
         await _mapController.addPotholeMarkers(markers, context: context);
-        AppLogger.info('포트홀 마커 로드 완료');
+        AppLogger.info('포트홀 마커 로드 완료 (API)');
+        return;
       }
+      AppLogger.warning('API에서 포트홀 데이터를 찾지 못해 로컬 데이터로 대체합니다');
     } catch (e) {
-      AppLogger.error('포트홀 마커 로드 실패', error: e);
+      AppLogger.error('포트홀 마커 API 로드 실패, 로컬 데이터 사용', error: e);
+    }
+
+    try {
+      final fallbackMarkers = await _mapController.loadPotholeMarkersFromJson();
+      if (!mounted) return;
+      await _mapController.addPotholeMarkers(fallbackMarkers, context: context);
+      AppLogger.info('포트홀 마커 로딩 완료 (로컬 데이터)');
+    } catch (e) {
+      AppLogger.error('포트홀 마커 로컬 데이터 로드 실패', error: e);
     }
   }
 
@@ -132,7 +146,14 @@ class _HomePageState extends State<HomePage>
   void _handlePlusMenuLocation() {
     _collapsePlusMenu();
     if (!_mapController.isMapReadyNotifier.value) return;
-    _mapController.moveToCurrentLocation(context);
+    unawaited(
+      _mapController.moveToCurrentLocation(context).then((_) async {
+        if (!mounted) return;
+        await _loadPotholeMarkers();
+      }).catchError((error, stackTrace) {
+        AppLogger.error('현재 위치 이동 실패', error: error, stackTrace: stackTrace);
+      }),
+    );
   }
 
   void _handlePlusMenuCamera() {
