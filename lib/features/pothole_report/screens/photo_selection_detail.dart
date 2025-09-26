@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 import '../../../core/services/logging/app_logger.dart';
+import '../../../core/services/api/pothole_api_service.dart';
 import '../models/photo_selection_state.dart';
 import '../widgets/image_picker_dialog.dart';
 import '../widgets/photo_grid.dart';
@@ -302,47 +304,32 @@ class _PhotoSelectionDetailScreenState
 
   Future<void> _submitPotholeReport() async {
     try {
-      // API 요청 데이터 준비
-      final Map<String, dynamic> requestData = {
-        'description': _descriptionController.text.trim(),
-        'location': {
-          'latitude': _currentPosition?.latitude ?? 0.0,
-          'longitude': _currentPosition?.longitude ?? 0.0,
-        },
-        'phone': _phoneController.text.trim(),
-        'timestamp': DateTime.now().toIso8601String(),
-      };
+      if (_currentPosition == null) {
+        throw Exception('위치 정보가 없습니다');
+      }
 
-      // 이미지가 있는 경우 첫 번째 이미지를 Base64로 인코딩
+      // XFile을 File로 변환
+      List<File>? imageFiles;
       if (_photoState.hasImages) {
-        final firstImage = _photoState.selectedImages.first;
-        final bytes = await firstImage.readAsBytes();
-        requestData['image'] = base64Encode(bytes);
-        requestData['imageType'] = 'jpeg';
+        imageFiles = [];
+        for (final xFile in _photoState.selectedImages) {
+          imageFiles.add(File(xFile.path));
+        }
       }
 
       AppLogger.info('민원 제출 데이터 준비 완료');
 
-      // API 호출
-      const String apiUrl = 'https://your-api-endpoint.com/api/reports';
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(requestData),
+      // PotholeApiService를 사용하여 API 호출
+      final responseData = await PotholeApiService.reportPothole(
+        latitude: _currentPosition!.latitude,
+        longitude: _currentPosition!.longitude,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        images: imageFiles,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = json.decode(response.body);
-        AppLogger.info('민원 제출 API 성공: ${responseData.toString()}');
-      } else {
-        AppLogger.error(
-          '민원 제출 API 실패: ${response.statusCode} - ${response.body}',
-        );
-        throw Exception('서버 응답 오류: ${response.statusCode}');
-      }
+      AppLogger.info('민원 제출 API 성공: ${responseData.toString()}');
     } catch (e) {
       AppLogger.error('민원 제출 처리 실패', error: e);
       rethrow;
@@ -392,10 +379,7 @@ class _PhotoSelectionDetailScreenState
                   alignment: Alignment.center,
                   child: Text(
                     '포트홀 신고하기',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   ),
                 ),
                 Align(

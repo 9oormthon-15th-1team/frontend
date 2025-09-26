@@ -37,7 +37,9 @@ class PotholeApiService {
           if (responseData is Map) {
             print('Map Keys: ${responseData.keys.toList()}');
             responseData.forEach((key, value) {
-              print('Key: $key, Value Type: ${value.runtimeType}, Value: $value');
+              print(
+                'Key: $key, Value Type: ${value.runtimeType}, Value: $value',
+              );
             });
           } else if (responseData is List) {
             print('List Length: ${responseData.length}');
@@ -62,21 +64,28 @@ class PotholeApiService {
         } else if (responseData is Map<String, dynamic>) {
           print('Processing as Map, looking for array field');
           // 서버 응답이 객체 형태인 경우 data 필드에서 배열 추출
-          if (responseData.containsKey('data') && responseData['data'] is List) {
+          if (responseData.containsKey('data') &&
+              responseData['data'] is List) {
             print('Found data field with List');
             jsonData = responseData['data'];
-          } else if (responseData.containsKey('potholes') && responseData['potholes'] is List) {
+          } else if (responseData.containsKey('potholes') &&
+              responseData['potholes'] is List) {
             print('Found potholes field with List');
             jsonData = responseData['potholes'];
-          } else if (responseData.containsKey('result') && responseData['result'] is List) {
+          } else if (responseData.containsKey('result') &&
+              responseData['result'] is List) {
             print('Found result field with List');
             jsonData = responseData['result'];
           } else {
             // 다른 가능한 키들 체크
             print('No recognizable list field found');
-            AppLogger.error('Unknown response structure. Keys: ${responseData.keys.toList()}');
+            AppLogger.error(
+              'Unknown response structure. Keys: ${responseData.keys.toList()}',
+            );
             AppLogger.error('Full response: $responseData');
-            throw Exception('Invalid response format: expected list or object with data array. Available keys: ${responseData.keys.join(', ')}');
+            throw Exception(
+              'Invalid response format: expected list or object with data array. Available keys: ${responseData.keys.join(', ')}',
+            );
           }
         } else {
           print('Invalid response type: ${responseData.runtimeType}');
@@ -91,9 +100,7 @@ class PotholeApiService {
         AppLogger.info('Successfully fetched ${potholes.length} potholes');
         print('=== Parsed Potholes ===');
         for (var pothole in potholes) {
-          print(
-            'ID: ${pothole.id}, Status: ${pothole.status.toDisplayName()}',
-          );
+          print('ID: ${pothole.id}, Status: ${pothole.status.toDisplayName()}');
         }
         print('=====================');
         return potholes;
@@ -156,7 +163,7 @@ class PotholeApiService {
         throw Exception('Maximum 6 images allowed');
       }
 
-      final uri = Uri.parse('$baseUrl/reports');
+      final uri = Uri.parse('$baseUrl/reports/with-files');
       final request = http.MultipartRequest('POST', uri);
 
       // 필수 텍스트 필드 추가
@@ -181,7 +188,9 @@ class PotholeApiService {
         }
       }
 
-      AppLogger.info('Sending pothole report with ${images?.length ?? 0} images');
+      AppLogger.info(
+        'Sending pothole report with ${images?.length ?? 0} images',
+      );
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
