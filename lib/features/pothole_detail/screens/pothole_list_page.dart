@@ -38,11 +38,11 @@ class _PotholeListPageState extends State<PotholeListPage> {
       setState(() {
         _potholes = potholes.map((p) => PotholeInfo(
               id: p.id.toString(),
-              title: p.address!!,
-              description: p.description!!,
+              title: p.address ?? '',
+              description: p.description ?? '',
               latitude: p.latitude,
               longitude: p.longitude,
-              address: p.address!!,
+              address: p.address ?? '',
               createdAt: p.createdAt,
               images: [],
               status: p.status,
@@ -67,7 +67,32 @@ class _PotholeListPageState extends State<PotholeListPage> {
   /// 필터별 포트홀 목록
   List<PotholeInfo> get _filteredPotholes {
     if (_selectedFilter == 'all') return _potholes;
-    return _potholes.where((p) => p.status == _selectedFilter).toList();
+
+    // 워크플로우 상태를 PotholeStatus enum으로 매핑
+    switch (_selectedFilter) {
+      case 'pending':
+        return _potholes.where((p) => p.status == PotholeStatus.verificationRequired).toList();
+      case 'in_progress':
+        return _potholes.where((p) => p.status == PotholeStatus.caution).toList();
+      case 'completed':
+        return _potholes.where((p) => p.status == PotholeStatus.danger).toList();
+      default:
+        return _potholes;
+    }
+  }
+
+  /// 필터별 포트홀 개수 계산
+  int _getFilteredCount(String filterValue) {
+    switch (filterValue) {
+      case 'pending':
+        return _potholes.where((p) => p.status == PotholeStatus.verificationRequired).length;
+      case 'in_progress':
+        return _potholes.where((p) => p.status == PotholeStatus.caution).length;
+      case 'completed':
+        return _potholes.where((p) => p.status == PotholeStatus.danger).length;
+      default:
+        return 0;
+    }
   }
 
   @override
@@ -138,7 +163,7 @@ class _PotholeListPageState extends State<PotholeListPage> {
     final isSelected = _selectedFilter == value;
     final count = value == 'all'
         ? _potholes.length
-        : _potholes.where((p) => p.status == value).length;
+        : _getFilteredCount(value);
 
     return GestureDetector(
       onTap: () {

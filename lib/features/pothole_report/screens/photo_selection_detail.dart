@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:frontend/core/theme/design_system.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 import '../../../core/services/logging/app_logger.dart';

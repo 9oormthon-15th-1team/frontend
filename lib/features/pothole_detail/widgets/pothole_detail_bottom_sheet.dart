@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/models/pothole_status.dart';
 import '../../../core/theme/tokens/app_colors.dart';
 import '../models/pothole_info.dart';
 
@@ -436,7 +437,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
 
   /// 조건부 민원번호 표시
   Widget _buildConditionalComplaintNumber() {
-    final isInProgress = widget.potholeInfo.status == 'in_progress';
+    final isInProgress = widget.potholeInfo.status == PotholeStatus.caution;
     final complaintId = widget.potholeInfo.complaintId?.isNotEmpty == true
         ? widget.potholeInfo.complaintId!
         : null;
@@ -464,7 +465,7 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
 
   /// 조건부 버튼들
   Widget _buildConditionalButtons() {
-    final isInProgress = widget.potholeInfo.status == 'in_progress';
+    final isInProgress = widget.potholeInfo.status == PotholeStatus.caution;
 
     if (isInProgress) {
       // 처리중일 때는 "처리중" 버튼만 표시
