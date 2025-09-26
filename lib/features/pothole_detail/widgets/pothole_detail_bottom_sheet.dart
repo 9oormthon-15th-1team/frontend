@@ -232,7 +232,17 @@ class _PotholeDetailBottomSheetState extends State<PotholeDetailBottomSheet> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(Icons.image_outlined, color: Colors.grey[400], size: 40),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.asset(
+          'assets/images/general.png',
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Icon(Icons.image_outlined, color: Colors.grey[400], size: 40),
+        ),
+      ),
     );
   }
 
