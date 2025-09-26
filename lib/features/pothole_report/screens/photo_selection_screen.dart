@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:frontend/features/pothole_report/screens/photo_selection_detail.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/services/logging/app_logger.dart';
 import '../../../core/services/api/pothole_api_service.dart';
@@ -36,23 +34,46 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
     _getCurrentLocation();
   }
 
+  /// 현재 위치 가져오기
   Future<void> _getCurrentLocation() async {
     try {
-      final permission = await Permission.location.request();
-      if (permission == PermissionStatus.granted) {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-          ),
-        );
-        if (mounted) {
-          setState(() {
-            _currentPosition = position;
-          });
+      AppLogger.info('위치 권한 확인 및 현재 위치 가져오기 시작');
+
+      // 위치 권한 확인
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('위치 권한이 거부되었습니다');
         }
       }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('위치 권한이 영구적으로 거부되었습니다. 설정에서 권한을 활성화해주세요.');
+      }
+
+      // GPS 활성화 확인
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('위치 서비스가 비활성화되어 있습니다. 설정에서 GPS를 활성화해주세요.');
+      }
+
+      // 현재 위치 가져오기
+      _currentPosition = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
+      );
+
+      AppLogger.info(
+        '현재 위치 가져오기 성공: lat=${_currentPosition?.latitude}, lng=${_currentPosition?.longitude}',
+      );
     } catch (e) {
-      AppLogger.error('위치 정보 획득 실패', error: e);
+      AppLogger.error('위치 정보 가져오기 실패', error: e);
+      if (mounted) {
+        _showErrorSnackBar('위치 정보를 가져올 수 없습니다. GPS를 활성화하고 위치 권한을 허용해주세요.');
+      }
     }
   }
 
@@ -176,6 +197,8 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
     try {
       await _submitPotholeReport();
 
+      if (!mounted) return;
+
       // 성공 메시지
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -202,28 +225,41 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
 
   Future<void> _submitPotholeReport() async {
     if (_currentPosition == null) {
-      throw Exception('위치 정보를 가져올 수 없습니다');
-    }
-
-    // XFile을 File로 변환
-    List<File>? imageFiles;
-    if (_photoState.hasImages) {
-      imageFiles = [];
-      for (final xFile in _photoState.selectedImages) {
-        imageFiles.add(File(xFile.path));
+      // 위치를 다시 가져오기 시도
+      await _getCurrentLocation();
+      if (_currentPosition == null) {
+        throw Exception('위치 정보를 가져올 수 없습니다');
       }
     }
 
-    AppLogger.info('포트홀 신고 데이터 준비 완료');
+    AppLogger.info('포트홀 신고 API 호출 시작');
+    AppLogger.info('위치: lat=${_currentPosition!.latitude}, lng=${_currentPosition!.longitude}');
+    AppLogger.info('이미지 개수: ${_photoState.selectedImages.length}');
 
-    // PotholeApiService를 사용하여 API 호출
-    final responseData = await PotholeApiService.reportPothole(
-      latitude: _currentPosition!.latitude,
-      longitude: _currentPosition!.longitude,
-      images: imageFiles,
-    );
+    try {
+      // XFile을 File로 변환
+      List<File>? imageFiles;
+      if (_photoState.hasImages) {
+        imageFiles = [];
+        for (final xFile in _photoState.selectedImages) {
+          imageFiles.add(File(xFile.path));
+          AppLogger.info('이미지 파일: ${xFile.path} (크기: ${await xFile.length()} bytes)');
+        }
+      }
 
-    AppLogger.info('포트홀 신고 API 성공: ${responseData.toString()}');
+      // PotholeApiService를 사용하여 API 호출
+      final responseData = await PotholeApiService.reportPothole(
+        latitude: _currentPosition!.latitude,
+        longitude: _currentPosition!.longitude,
+        description: '포트홀 신고', // 기본 설명
+        images: imageFiles,
+      );
+
+      AppLogger.info('포트홀 신고 API 성공: $responseData');
+    } catch (e) {
+      AppLogger.error('포트홀 신고 API 실패', error: e);
+      rethrow;
+    }
   }
 
   void _showErrorSnackBar(String message) {
@@ -304,7 +340,7 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -385,6 +421,7 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
 
     // 닫힌 후에 새로운 화면으로 이동
     Future.delayed(Duration.zero, () {
+      if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
           fullscreenDialog: true, // 전체 화면 다이얼로그처럼 표시

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 class SettingAccordionTile extends StatefulWidget {
   final String? icon;
@@ -70,7 +69,7 @@ class _SettingAccordionTileState extends State<SettingAccordionTile>
             child: Row(
               children: [
                 if (widget.icon != null) ...[
-                  Container(
+                  SizedBox(
                     width: 24,
                     height: 24,
                     child: SvgPicture.asset(

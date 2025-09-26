@@ -76,7 +76,7 @@ class _MainLayoutState extends State<MainLayout> {
                 behavior: HitTestBehavior.opaque,
                 onTap: () => PlusMenuState.isExpanded.value = false,
                 child: Container(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                 ),
               ),
             ),

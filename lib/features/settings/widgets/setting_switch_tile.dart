@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 class SettingSwitchTile extends StatelessWidget {
   final String icon;
@@ -32,7 +31,7 @@ class SettingSwitchTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 24,
               height: 24,
               child: SvgPicture.asset(
@@ -60,7 +59,7 @@ class SettingSwitchTile extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: Colors.white,
+              activeThumbColor: Colors.white,
               activeTrackColor: const Color(0xFFFF6B35),
               inactiveThumbColor: Colors.white,
               inactiveTrackColor: const Color(0xFFE0E0E0),

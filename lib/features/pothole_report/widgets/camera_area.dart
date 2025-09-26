@@ -73,7 +73,7 @@ class CameraArea extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: double.infinity,
         height: areaHeight,
         child: CustomPaint(
@@ -126,7 +126,7 @@ class CameraArea extends StatelessWidget {
           // 대표 이미지
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Container(
+            child: SizedBox(
               width: double.infinity,
               height: double.infinity,
               child: latestImage != null

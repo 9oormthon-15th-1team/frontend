@@ -19,7 +19,10 @@
       "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_r6peny/**)",
       "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_Bkjzrh/**)",
       "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_oBb0Rg/**)",
-      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_9Xt2Vb/**)"
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_9Xt2Vb/**)",
+      "Bash(find:*)",
+      "Read(//var/folders/w7/_fxzq7_d1_v84qb5d_k356z00000gn/T/TemporaryItems/NSIRD_screencaptureui_THUeEP/**)",
+      "Bash(git rebase:*)"
     ],
     "deny": [],
     "ask": []

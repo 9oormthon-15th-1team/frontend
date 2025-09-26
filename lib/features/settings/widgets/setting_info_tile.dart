@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 class SettingInfoTile extends StatelessWidget {
   final String? icon;
@@ -26,7 +25,7 @@ class SettingInfoTile extends StatelessWidget {
       child: Row(
         children: [
           if (icon != null) ...[
-            Container(
+            SizedBox(
               width: 24,
               height: 24,
               child: SvgPicture.asset(

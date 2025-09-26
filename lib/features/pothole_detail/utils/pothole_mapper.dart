@@ -26,4 +26,5 @@ class PotholeMapper {
   static List<PotholeInfo> fromPotholeList(List<Pothole> potholes) {
     return potholes.map((pothole) => fromPothole(pothole)).toList();
   }
+
 }

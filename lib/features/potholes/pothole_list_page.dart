@@ -19,8 +19,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
   bool isLoading = true;
   String? error;
   String _currentAddress = '제주특별자치도 제주시 이도2동';
-  String? _selectedSeverityFilter;
-  String? _selectedStatusFilter;
 
   @override
   void initState() {
@@ -210,19 +208,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
     // TODO: Navigate to maps with pothole location
   }
 
-  void _onSeverityFilterChanged(String? severity) {
-    setState(() {
-      _selectedSeverityFilter = severity;
-      // _applySortingAndFiltering();
-    });
-  }
-
-  void _onStatusFilterChanged(String? status) {
-    setState(() {
-      _selectedStatusFilter = status;
-      // _applySortingAndFiltering();
-    });
-  }
 
   // void _applySortingAndFiltering() {
   //   List<Pothole> result = List.from(potholes);
@@ -274,37 +259,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
   //   filteredPotholes = result;
   // }
 
-  double _calculateDistanceValue(Pothole pothole) {
-    // 목업 거리 계산 (실제로는 현재 위치와의 거리를 계산해야 함)
-    return pothole.id * 0.3 + 1.5;
-  }
 
-  int _getSeverityPriority(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'high':
-      case 'severe':
-        return 3;
-      case 'medium':
-      case 'moderate':
-        return 2;
-      case 'low':
-      case 'minor':
-        return 1;
-      default:
-        return 0;
-    }
-  }
 
-  int _getStatusPriority(String status) {
-    switch (status) {
-      case '신고됨':
-        return 1;
-      case '처리중':
-        return 2;
-      case '완료':
-        return 3;
-      default:
-        return 0;
-    }
-  }
 }

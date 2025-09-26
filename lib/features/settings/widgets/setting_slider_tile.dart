@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 class SettingSliderTile extends StatelessWidget {
   final String icon;
@@ -42,7 +41,7 @@ class SettingSliderTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 24,
                   height: 24,
                   child: SvgPicture.asset(
@@ -84,7 +83,7 @@ class SettingSliderTile extends StatelessWidget {
                 activeTrackColor: const Color(0xFFFF6B35),
                 thumbColor: const Color(0xFFFF6B35),
                 inactiveTrackColor: const Color(0xFFE0E0E0),
-                overlayColor: const Color(0xFFFF6B35).withOpacity(0.12),
+                overlayColor: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                 valueIndicatorColor: const Color(0xFFFF6B35),
                 trackHeight: 4.0,
                 thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),

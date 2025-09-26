@@ -41,7 +41,6 @@ class _PhotoSelectionDetailScreenState
   bool _isConsentChecked = false;
   bool _isPhoneVerified = false;
   bool _isVerificationSent = false;
-  String _locationAddress = '위치를 가져오는 중...';
 
   @override
   void initState() {
@@ -70,23 +69,17 @@ class _PhotoSelectionDetailScreenState
         if (mounted) {
           setState(() {
             _currentPosition = position;
-            _locationAddress =
-                '위도: ${position.latitude.toStringAsFixed(6)}, 경도: ${position.longitude.toStringAsFixed(6)}';
           });
           _updateMapLocation();
         }
       } else {
         if (mounted) {
-          setState(() {
-            _locationAddress = '위치 권한이 거부되었습니다.';
-          });
+          setState(() {});
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _locationAddress = '위치를 가져올 수 없습니다.';
-        });
+        setState(() {});
       }
       AppLogger.error('위치 정보 획득 실패', error: e);
     }
@@ -280,6 +273,8 @@ class _PhotoSelectionDetailScreenState
     try {
       await _submitPotholeReport();
 
+      if (!mounted) return;
+
       // 성공 메시지
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -296,9 +291,11 @@ class _PhotoSelectionDetailScreenState
       AppLogger.error('민원 제출 실패', error: e);
       _showErrorSnackBar('제출 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -680,7 +677,7 @@ class _PhotoSelectionDetailScreenState
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),

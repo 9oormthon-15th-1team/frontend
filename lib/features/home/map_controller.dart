@@ -162,14 +162,19 @@ class MapController {
   /// 현재 위치로 이동 (버튼 전용)
   Future<void> moveToCurrentLocation(BuildContext context) async {
     try {
+      // 컨텍스트가 필요한 오버레이를 먼저 빌드
+      await _buildCurrentLocationOverlay(context);
+
       // 현재 저장된 위치로 먼저 이동
       if (_mapController != null) {
         await moveToPosition(_currentPosition.value, zoom: 15);
+        // ignore: use_build_context_synchronously
         await addCurrentLocationMarker(context);
         AppLogger.info('저장된 현재 위치로 이동 완료');
       }
 
       // 그 다음 실제 현재 위치를 다시 가져와서 업데이트
+      // ignore: use_build_context_synchronously
       await getCurrentLocation(moveMap: true, context: context);
     } catch (e) {
       AppLogger.error('현재 위치로 이동 실패', error: e);
@@ -244,9 +249,11 @@ class MapController {
           currentLatLng,
           zoom: 15,
         ); // 100m 기준 줌 레벨로 설정 (15가 약 100m)
+        // ignore: use_build_context_synchronously
         await addCurrentLocationMarker(context);
       } else if (_mapController != null) {
         // 맵을 이동하지 않더라도 마커는 업데이트
+        // ignore: use_build_context_synchronously
         await addCurrentLocationMarker(context);
       }
 
@@ -264,6 +271,7 @@ class MapController {
       // 맵이 준비되었다면 기본 위치로 이동
       if (_mapController != null && moveMap) {
         await moveToPosition(defaultPosition, zoom: 15);
+        // ignore: use_build_context_synchronously
         await addCurrentLocationMarker(context);
       }
     }
@@ -273,6 +281,11 @@ class MapController {
   Future<void> addCurrentLocationMarker(BuildContext context) async {
     if (_mapController == null) return;
 
+    // 캐시된 오버레이가 없으면 빌드, 있으면 캐시된 것 사용
+    if (_currentLocationOverlayImage == null) {
+      await _buildCurrentLocationOverlay(context);
+    }
+
     try {
       // 현재 위치 마커 추가 (파란색 원형 마커)
       final marker = NMarker(
@@ -280,7 +293,7 @@ class MapController {
         position: _currentPosition.value,
         size: const NSize(48, 56),
         anchor: const NPoint(0.5, 0.5),
-        icon: await _buildCurrentLocationOverlay(context),
+        icon: _currentLocationOverlayImage!,
       );
 
       await _mapController!.addOverlay(marker);
@@ -490,6 +503,7 @@ class MapController {
       for (final marker in _potholeMarkers) {
         final clusterable = await _buildClusterableMarker(
           marker,
+          // ignore: use_build_context_synchronously
           context: context,
         );
         if (clusterable != null) {

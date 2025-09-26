@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:frontend/core/theme/tokens/app_typography.dart';
 
 import 'settings_controller.dart';
 import 'widgets/setting_switch_tile.dart';
@@ -53,7 +51,7 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1A1A1A),
         elevation: 0.5,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFF5F5F5),

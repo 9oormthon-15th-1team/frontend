@@ -190,7 +190,7 @@ class _HomePageState extends State<HomePage>
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _collapsePlusMenu,
-                child: Container(color: Colors.black.withOpacity(0.4)),
+                child: Container(color: Colors.black.withValues(alpha: 0.4)),
               ),
             ),
 
