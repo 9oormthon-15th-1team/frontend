@@ -298,35 +298,42 @@ class _PhotoSelectionDetailScreenState
   }
 
   Future<void> _submitPotholeReport() async {
-    try {
+    if (_currentPosition == null) {
+      // 위치를 다시 가져오기 시도
+      await _getCurrentLocation();
       if (_currentPosition == null) {
-        throw Exception('위치 정보가 없습니다');
+        throw Exception('위치 정보를 가져올 수 없습니다');
       }
+    }
 
+    AppLogger.info('포트홀 신고 API 호출 시작');
+    AppLogger.info('위치: lat=${_currentPosition!.latitude}, lng=${_currentPosition!.longitude}');
+    AppLogger.info('이미지 개수: ${_photoState.selectedImages.length}');
+
+    try {
       // XFile을 File로 변환
       List<File>? imageFiles;
       if (_photoState.hasImages) {
         imageFiles = [];
         for (final xFile in _photoState.selectedImages) {
           imageFiles.add(File(xFile.path));
+          AppLogger.info('이미지 파일: ${xFile.path} (크기: ${await xFile.length()} bytes)');
         }
       }
-
-      AppLogger.info('민원 제출 데이터 준비 완료');
 
       // PotholeApiService를 사용하여 API 호출
       final responseData = await PotholeApiService.reportPothole(
         latitude: _currentPosition!.latitude,
         longitude: _currentPosition!.longitude,
         description: _descriptionController.text.trim().isEmpty
-            ? null
+            ? '포트홀 신고'
             : _descriptionController.text.trim(),
         images: imageFiles,
       );
 
-      AppLogger.info('민원 제출 API 성공: ${responseData.toString()}');
+      AppLogger.info('포트홀 신고 API 성공: $responseData');
     } catch (e) {
-      AppLogger.error('민원 제출 처리 실패', error: e);
+      AppLogger.error('포트홀 신고 API 실패', error: e);
       rethrow;
     }
   }
