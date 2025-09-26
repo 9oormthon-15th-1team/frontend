@@ -281,8 +281,8 @@ class _PhotoSelectionDetailScreenState
         ),
       );
 
-      // 이전 화면으로 돌아가기
-      Navigator.of(context).pop();
+      // 모든 바텀시트와 다이얼로그를 닫고 홈으로 돌아가기
+      Navigator.of(context).popUntil((route) => route.isFirst);
 
       AppLogger.info('민원 제출 완료');
     } catch (e) {
