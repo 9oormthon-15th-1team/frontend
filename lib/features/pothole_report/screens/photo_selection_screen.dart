@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/features/pothole_report/screens/photo_selection_detail.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/services/logging/app_logger.dart';
+import '../../../core/services/api/pothole_api_service.dart';
 import '../../../core/theme/tokens/app_colors.dart';
 import '../models/photo_selection_state.dart';
 import '../widgets/camera_area.dart';
@@ -30,6 +33,27 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
   @override
   void initState() {
     super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      final permission = await Permission.location.request();
+      if (permission == PermissionStatus.granted) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        );
+        if (mounted) {
+          setState(() {
+            _currentPosition = position;
+          });
+        }
+      }
+    } catch (e) {
+      AppLogger.error('위치 정보 획득 실패', error: e);
+    }
   }
 
   Future<void> _showImagePicker() async {
@@ -160,16 +184,19 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
         ),
       );
 
-      // 이전 화면으로 돌아가기
+      // 모든 바텀시트와 다이얼로그를 닫고 홈으로 돌아가기
+      Navigator.of(context).popUntil((route) => route.isFirst);
 
       AppLogger.info('포트홀 신고 제출 완료');
     } catch (e) {
       AppLogger.error('포트홀 신고 제출 실패', error: e);
       _showErrorSnackBar('신고 제출 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -178,18 +205,25 @@ class _PhotoSelectionScreenState extends State<PhotoSelectionScreen> {
       throw Exception('위치 정보를 가져올 수 없습니다');
     }
 
-    // 이미지를 Base64로 인코딩 (첫 번째 이미지만 사용, 여러 이미지 지원은 추후 구현)
-    String imageBase64 = '';
+    // XFile을 File로 변환
+    List<File>? imageFiles;
     if (_photoState.hasImages) {
-      try {
-        final firstImage = _photoState.selectedImages.first;
-        final bytes = await firstImage.readAsBytes();
-        imageBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-      } catch (e) {
-        AppLogger.error('이미지 인코딩 실패', error: e);
-        throw Exception('이미지 처리 중 오류가 발생했습니다');
+      imageFiles = [];
+      for (final xFile in _photoState.selectedImages) {
+        imageFiles.add(File(xFile.path));
       }
     }
+
+    AppLogger.info('포트홀 신고 데이터 준비 완료');
+
+    // PotholeApiService를 사용하여 API 호출
+    final responseData = await PotholeApiService.reportPothole(
+      latitude: _currentPosition!.latitude,
+      longitude: _currentPosition!.longitude,
+      images: imageFiles,
+    );
+
+    AppLogger.info('포트홀 신고 API 성공: ${responseData.toString()}');
   }
 
   void _showErrorSnackBar(String message) {

@@ -8,8 +8,8 @@ class BaseApiService {
   static const Duration timeout = Duration(seconds: 30);
 
   static Map<String, String> get _defaultHeaders => {
-        'Content-Type': 'application/json',
-      };
+    'Content-Type': 'application/json',
+  };
 
   /// GET 요청
   static Future<Map<String, dynamic>> get(
@@ -129,7 +129,10 @@ class BaseApiService {
   }
 
   /// URI 빌드 헬퍼
-  static Uri _buildUri(String endpoint, [Map<String, String>? queryParameters]) {
+  static Uri _buildUri(
+    String endpoint, [
+    Map<String, String>? queryParameters,
+  ]) {
     final url = endpoint.startsWith('http') ? endpoint : '$baseUrl$endpoint';
     final uri = Uri.parse(url);
 
@@ -165,7 +168,8 @@ class BaseApiService {
         throw Exception('Invalid JSON response');
       }
     } else {
-      final errorMessage = 'HTTP ${response.statusCode}: ${response.reasonPhrase}';
+      final errorMessage =
+          'HTTP ${response.statusCode}: ${response.reasonPhrase}';
       AppLogger.error('$method $endpoint failed - $errorMessage');
       AppLogger.error('Response body: ${response.body}');
       throw HttpException(
@@ -197,9 +201,11 @@ class BaseApiService {
           // 다양한 가능한 키 패턴 확인
           if (decoded.containsKey('data') && decoded['data'] is List) {
             return decoded['data'] as List;
-          } else if (decoded.containsKey('potholes') && decoded['potholes'] is List) {
+          } else if (decoded.containsKey('potholes') &&
+              decoded['potholes'] is List) {
             return decoded['potholes'] as List;
-          } else if (decoded.containsKey('result') && decoded['result'] is List) {
+          } else if (decoded.containsKey('result') &&
+              decoded['result'] is List) {
             return decoded['result'] as List;
           } else if (decoded.containsKey('items') && decoded['items'] is List) {
             return decoded['items'] as List;
@@ -207,15 +213,22 @@ class BaseApiService {
             return decoded['list'] as List;
           } else {
             // 응답 구조 로깅
-            AppLogger.error('Unknown response structure. Available keys: ${decoded.keys.toList()}');
+            AppLogger.error(
+              'Unknown response structure. Available keys: ${decoded.keys.toList()}',
+            );
             AppLogger.error('Response body: ${response.body}');
-            throw Exception('Response does not contain a recognizable list field. Available keys: ${decoded.keys.join(', ')}');
+            throw Exception(
+              'Response does not contain a recognizable list field. Available keys: ${decoded.keys.join(', ')}',
+            );
           }
         } else {
-          throw Exception('Response is neither a list nor an object. Type: ${decoded.runtimeType}');
+          throw Exception(
+            'Response is neither a list nor an object. Type: ${decoded.runtimeType}',
+          );
         }
       } catch (e) {
-        if (e.toString().contains('Response does not contain') || e.toString().contains('Response is neither')) {
+        if (e.toString().contains('Response does not contain') ||
+            e.toString().contains('Response is neither')) {
           rethrow; // 이미 처리된 구조적 오류는 재던짐
         }
         AppLogger.error('Failed to parse JSON response: $e');
@@ -223,7 +236,8 @@ class BaseApiService {
         throw Exception('Invalid JSON response: $e');
       }
     } else {
-      final errorMessage = 'HTTP ${response.statusCode}: ${response.reasonPhrase}';
+      final errorMessage =
+          'HTTP ${response.statusCode}: ${response.reasonPhrase}';
       AppLogger.error('$method $endpoint failed - $errorMessage');
       AppLogger.error('Response body: ${response.body}');
       throw HttpException(
