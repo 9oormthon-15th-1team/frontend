@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -63,10 +62,10 @@ class _SplashPageState extends State<SplashPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 600,
-                height: 600,
-                child: Lottie.asset(
-                  'assets/splash/splash_moving.json',
+                width: 200,
+                height: 200,
+                child: Image.asset(
+                  'assets/logo/portholeLogo.jpeg',
                   fit: BoxFit.contain,
                 ),
               ),

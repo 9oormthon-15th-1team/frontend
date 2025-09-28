@@ -103,6 +103,7 @@ flutter:
     - assets/svg/
     - assets/png/
     - assets/splash/
+    - assets/logo/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -128,8 +129,8 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: assets/logo/logo.png
-  image_path_ios: assets/logo/logo.svg
+  image_path: assets/logo/portholeLogo.jpeg
+  image_path_ios: assets/logo/portholeLogo.jpeg
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
