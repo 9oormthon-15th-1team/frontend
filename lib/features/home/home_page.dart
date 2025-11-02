@@ -97,6 +97,8 @@ class _HomePageState extends State<HomePage>
 
     try {
       final markers = await _mapController.loadPotholeMarkersFromApi();
+      if (!mounted) return;
+
       if (markers.isNotEmpty) {
         await _mapController.addPotholeMarkers(markers, context: context);
         AppLogger.info('포트홀 마커 로드 완료 (API)');

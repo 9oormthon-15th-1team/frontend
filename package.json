@@ -1,0 +1,29 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "제주도 포트홀 신고 모바일 애플리케이션",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky",
+    "pre-commit": "lint-staged && flutter analyze"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "*.dart": [
+      "flutter analyze"
+    ]
+  },
+  "author": "",
+  "license": "ISC"
+}
