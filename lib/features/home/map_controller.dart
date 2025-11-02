@@ -985,6 +985,9 @@ class MapController {
     double? distance,
   }) async {
     try {
+      // context를 async gap 전에 저장
+      final savedContext = context;
+
       final markers = await loadPotholeMarkersFromApi(
         latitude: latitude,
         longitude: longitude,
@@ -998,7 +1001,12 @@ class MapController {
         return;
       }
 
-      await addPotholeMarkers(markers, context: context);
+      // savedContext가 여전히 유효한 경우에만 사용
+      if (savedContext != null && savedContext.mounted) {
+        await addPotholeMarkers(markers, context: savedContext);
+      } else {
+        await addPotholeMarkers(markers);
+      }
     } catch (e, stackTrace) {
       AppLogger.error(
         'API 기반 포트홀 마커 갱신 실패',
