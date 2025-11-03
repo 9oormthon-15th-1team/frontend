@@ -35,7 +35,7 @@ class MapController {
   NaverMapController? _mapController;
   final ValueNotifier<bool> _isMapReady = ValueNotifier<bool>(false);
   final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
-    const NLatLng(37.5665, 126.9780), // 서울시청 기본 위치 (JSON 데이터와 맞춤)
+    const NLatLng(33.4998, 126.5313), // 서울시청 기본 위치 (JSON 데이터와 맞춤)
   );
   final ValueNotifier<String> _currentAddress = ValueNotifier<String>(
     '위치 로딩 중...',
