@@ -149,11 +149,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
           AddressInputWidget(
             address: _currentAddress,
             onRefresh: _loadPotholes,
-            onAddressChanged: (newAddress) {
-              setState(() {
-                _currentAddress = newAddress;
-              });
-            },
           ),
 
           Expanded(child: _buildBody()),
@@ -198,12 +193,12 @@ class _PotholeListPageState extends State<PotholeListPage> {
       );
     }
 
-    if (filteredPotholes.isEmpty) {
-      if (potholes.isNotEmpty) {
-        return const Center(child: Text('선택한 필터 조건에 맞는 포트홀이 없습니다.'));
-      }
-      return const Center(child: Text('No potholes found'));
-    }
+    // if (filteredPotholes.isEmpty) {
+    //   if (potholes.isNotEmpty) {
+    //     return const Center(child: Text('선택한 필터 조건에 맞는 포트홀이 없습니다.'));
+    //   }
+    //   return const Center(child: Text('No potholes found'));
+    // }
 
     return RefreshIndicator(
       onRefresh: _loadPotholes,
