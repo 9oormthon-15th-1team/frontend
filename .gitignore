@@ -185,3 +185,7 @@ yarn-error.log*
 pubspec.lock
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# claude
+.claude
+**/CLAUDE.md

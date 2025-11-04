@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'settings_controller.dart';
-import 'widgets/setting_switch_tile.dart';
-import 'widgets/setting_slider_tile.dart';
+// import 'widgets/setting_switch_tile.dart';
+// import 'widgets/setting_slider_tile.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/setting_accordion_tile.dart';
 import 'widgets/setting_info_tile.dart';
@@ -60,19 +60,19 @@ class _SettingsPageState extends State<SettingsPage> {
         physics: const BouncingScrollPhysics(),
         children: [
           // 알림 설정 섹션
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Text(
-              '알림 설정',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2A2A2A),
-              ),
-            ),
-          ),
-          _buildNotificationSection(),
-          const SizedBox(height: 40),
+          // const Padding(
+          //   padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
+          //   child: Text(
+          //     '알림 설정',
+          //     style: TextStyle(
+          //       fontSize: 16,
+          //       fontWeight: FontWeight.w600,
+          //       color: Color(0xFF2A2A2A),
+          //     ),
+          //   ),
+          // ),
+          // _buildNotificationSection(),
+          // const SizedBox(height: 40),
 
           // 정보 섹션
           const Padding(
@@ -93,64 +93,64 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildNotificationSection() {
-    return SettingsSection(
-      children: [
-        ValueListenableBuilder<bool>(
-          valueListenable: _controller.urgentAlarmNotifier,
-          builder: (context, value, child) {
-            return SettingSwitchTile(
-              icon: 'assets/svg/Ico_Emer.svg',
-              title: '긴급 알림',
-              subtitle: '',
-              value: value,
-              onChanged: _controller.setUrgentAlarm,
-            );
-          },
-        ),
-        ValueListenableBuilder<double>(
-          valueListenable: _controller.alarmDistanceNotifier,
-          builder: (context, value, child) {
-            return SettingSliderTile(
-              icon: 'assets/svg/Ico_Distance.svg',
-              title: '알림 거리',
-              subtitle: '',
-              value: value,
-              min: 0.0,
-              max: 1000.0,
-              divisions: 20,
-              onChanged: _controller.setAlarmDistance,
-              formatLabel: _controller.formatDistance,
-            );
-          },
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _controller.voiceGuideNotifier,
-          builder: (context, value, child) {
-            return SettingSwitchTile(
-              icon: 'assets/svg/Ico_Sound.svg',
-              title: '음성 안내',
-              subtitle: '',
-              value: value,
-              onChanged: _controller.setVoiceGuide,
-            );
-          },
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _controller.vibrationNotifier,
-          builder: (context, value, child) {
-            return SettingSwitchTile(
-              icon: 'assets/svg/Ico_Bell.svg',
-              title: '진동',
-              subtitle: '',
-              value: value,
-              onChanged: _controller.setVibration,
-            );
-          },
-        ),
-      ],
-    );
-  }
+  // Widget _buildNotificationSection() {
+  //   return SettingsSection(
+  //     children: [
+  //       ValueListenableBuilder<bool>(
+  //         valueListenable: _controller.urgentAlarmNotifier,
+  //         builder: (context, value, child) {
+  //           return SettingSwitchTile(
+  //             icon: 'assets/svg/Ico_Emer.svg',
+  //             title: '긴급 알림',
+  //             subtitle: '',
+  //             value: value,
+  //             onChanged: _controller.setUrgentAlarm,
+  //           );
+  //         },
+  //       ),
+  //       ValueListenableBuilder<double>(
+  //         valueListenable: _controller.alarmDistanceNotifier,
+  //         builder: (context, value, child) {
+  //           return SettingSliderTile(
+  //             icon: 'assets/svg/Ico_Distance.svg',
+  //             title: '알림 거리',
+  //             subtitle: '',
+  //             value: value,
+  //             min: 0.0,
+  //             max: 1000.0,
+  //             divisions: 20,
+  //             onChanged: _controller.setAlarmDistance,
+  //             formatLabel: _controller.formatDistance,
+  //           );
+  //         },
+  //       ),
+  //       ValueListenableBuilder<bool>(
+  //         valueListenable: _controller.voiceGuideNotifier,
+  //         builder: (context, value, child) {
+  //           return SettingSwitchTile(
+  //             icon: 'assets/svg/Ico_Sound.svg',
+  //             title: '음성 안내',
+  //             subtitle: '',
+  //             value: value,
+  //             onChanged: _controller.setVoiceGuide,
+  //           );
+  //         },
+  //       ),
+  //       ValueListenableBuilder<bool>(
+  //         valueListenable: _controller.vibrationNotifier,
+  //         builder: (context, value, child) {
+  //           return SettingSwitchTile(
+  //             icon: 'assets/svg/Ico_Bell.svg',
+  //             title: '진동',
+  //             subtitle: '',
+  //             value: value,
+  //             onChanged: _controller.setVibration,
+  //           );
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildDisplaySection() {
     return SettingsSection(

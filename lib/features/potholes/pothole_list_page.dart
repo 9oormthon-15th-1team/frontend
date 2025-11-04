@@ -3,6 +3,7 @@ import '../../core/models/pothole.dart';
 import '../../core/models/pothole_status.dart';
 import '../../core/services/api/pothole_api_service.dart';
 import '../../widgets/loading/loading_widget.dart';
+import '../home/map_controller.dart';
 import 'widgets/address_input_widget.dart';
 import 'widgets/pothole_list_item.dart';
 
@@ -18,12 +19,35 @@ class _PotholeListPageState extends State<PotholeListPage> {
   List<Pothole> filteredPotholes = [];
   bool isLoading = true;
   String? error;
-  String _currentAddress = '제주특별자치도 제주시 이도2동';
+
+  // Singleton MapController 인스턴스 사용
+  final MapController _mapController = MapController();
+  String _currentAddress = '위치를 가져오는 중...';
 
   @override
   void initState() {
     super.initState();
+    // MapController의 주소 변경을 구독
+    _mapController.currentAddressNotifier.addListener(_updateAddress);
+    // 초기값 설정
+    _currentAddress = _mapController.currentAddressNotifier.value;
     _loadPotholes();
+  }
+
+  @override
+  void dispose() {
+    // 리스너 제거
+    _mapController.currentAddressNotifier.removeListener(_updateAddress);
+    super.dispose();
+  }
+
+  /// MapController의 주소가 변경되면 호출됨
+  void _updateAddress() {
+    if (mounted) {
+      setState(() {
+        _currentAddress = _mapController.currentAddressNotifier.value;
+      });
+    }
   }
 
   Future<void> _loadPotholes() async {
@@ -125,11 +149,6 @@ class _PotholeListPageState extends State<PotholeListPage> {
           AddressInputWidget(
             address: _currentAddress,
             onRefresh: _loadPotholes,
-            onAddressChanged: (newAddress) {
-              setState(() {
-                _currentAddress = newAddress;
-              });
-            },
           ),
 
           Expanded(child: _buildBody()),
@@ -174,12 +193,12 @@ class _PotholeListPageState extends State<PotholeListPage> {
       );
     }
 
-    if (filteredPotholes.isEmpty) {
-      if (potholes.isNotEmpty) {
-        return const Center(child: Text('선택한 필터 조건에 맞는 포트홀이 없습니다.'));
-      }
-      return const Center(child: Text('No potholes found'));
-    }
+    // if (filteredPotholes.isEmpty) {
+    //   if (potholes.isNotEmpty) {
+    //     return const Center(child: Text('선택한 필터 조건에 맞는 포트홀이 없습니다.'));
+    //   }
+    //   return const Center(child: Text('No potholes found'));
+    // }
 
     return RefreshIndicator(
       onRefresh: _loadPotholes,

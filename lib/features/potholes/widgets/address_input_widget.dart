@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class AddressInputWidget extends StatefulWidget {
   final String address;
   final VoidCallback onRefresh;
-  final Function(String) onAddressChanged;
   final bool isLoading;
   final String? error;
 
@@ -11,7 +10,6 @@ class AddressInputWidget extends StatefulWidget {
     super.key,
     required this.address,
     required this.onRefresh,
-    required this.onAddressChanged,
     this.isLoading = false,
     this.error,
   });
@@ -53,7 +51,6 @@ class _AddressInputWidgetState extends State<AddressInputWidget> {
           label: '현재 위치: ${widget.address}',
           hint: '탭하여 위치 변경',
           child: InkWell(
-            onTap: () => _showLocationPicker(context),
             borderRadius: BorderRadius.circular(28),
             child: Row(
               children: [
@@ -152,137 +149,6 @@ class _AddressInputWidgetState extends State<AddressInputWidget> {
       ),
       overflow: TextOverflow.ellipsis,
       maxLines: 1,
-    );
-  }
-
-  void _showLocationPicker(BuildContext context) {
-    final TextEditingController controller = TextEditingController(
-      text: widget.address,
-    );
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF6B35),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.location_on,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      '위치 설정',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2A2A2A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: '주소를 입력하세요',
-                    hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
-                    filled: true, // 배경 채우기 활성화
-                    fillColor: Colors.white, // 배경 색상 흰색
-
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE1E1E1)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFF6B35),
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white, // 배경 하얀색
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFFE0E0E0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          '취소',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF757575),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          widget.onAddressChanged(controller.text);
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B35),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          '확인',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

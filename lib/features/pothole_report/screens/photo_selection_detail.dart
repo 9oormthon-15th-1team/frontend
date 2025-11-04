@@ -1,16 +1,13 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:porthole_in_jeju/core/theme/design_system.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
+import '../../../core/services/location/location_service.dart';
 import '../../../core/services/logging/app_logger.dart';
-import '../../../core/services/api/pothole_api_service.dart';
 import '../models/photo_selection_state.dart';
+import '../services/image_picker_service.dart';
+import '../services/pothole_report_submission_service.dart';
 import '../widgets/image_picker_dialog.dart';
 import '../widgets/photo_grid.dart';
 
@@ -27,18 +24,11 @@ class PhotoSelectionDetailScreen extends StatefulWidget {
 class _PhotoSelectionDetailScreenState
     extends State<PhotoSelectionDetailScreen> {
   late PhotoSelectionState _photoState;
-  final ImagePicker _imagePicker = ImagePicker();
   Position? _currentPosition;
   NaverMapController? _naverMapController;
   bool _isLoading = false;
   bool _isSubmitting = false;
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _verificationCodeController =
-      TextEditingController();
-  bool _isConsentChecked = false;
-  bool _isPhoneVerified = false;
-  bool _isVerificationSent = false;
 
   @override
   void initState() {
@@ -50,30 +40,21 @@ class _PhotoSelectionDetailScreenState
   @override
   void dispose() {
     _descriptionController.dispose();
-    _phoneController.dispose();
-    _verificationCodeController.dispose();
     super.dispose();
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      final permission = await Permission.location.request();
-      if (permission == PermissionStatus.granted) {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-          ),
-        );
-        if (mounted) {
-          setState(() {
-            _currentPosition = position;
-          });
-          _updateMapLocation();
-        }
-      } else {
-        if (mounted) {
-          setState(() {});
-        }
+      final position = await LocationService.getCurrentLocation();
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+        });
+        _updateMapLocation();
+      }
+    } on LocationServiceException catch (e) {
+      if (mounted) {
+        _showErrorSnackBar(e.toString());
       }
     } catch (e) {
       if (mounted) {
@@ -105,53 +86,6 @@ class _PhotoSelectionDetailScreenState
     }
   }
 
-  Future<void> _sendVerificationCode() async {
-    if (_phoneController.text.isEmpty) {
-      _showErrorSnackBar('전화번호를 입력해주세요.');
-      return;
-    }
-
-    // 실제로는 SMS API를 호출합니다.
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() {
-        _isVerificationSent = true;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('인증번호가 발송되었습니다.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
-
-  void _verifyCode() {
-    if (_verificationCodeController.text.isEmpty) {
-      _showErrorSnackBar('인증번호를 입력해주세요.');
-      return;
-    }
-
-    // 실제로는 서버에서 인증번호를 검증합니다.
-    // 여기서는 시뮬레이션을 위해 임의의 조건을 사용합니다.
-    if (_verificationCodeController.text == '1234') {
-      setState(() {
-        _isPhoneVerified = true;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('인증되었습니다.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } else {
-      _showErrorSnackBar('잘못된 인증번호입니다.');
-    }
-  }
-
   Future<void> _showImagePicker() async {
     if (_isLoading) return;
 
@@ -167,86 +101,27 @@ class _PhotoSelectionDetailScreenState
     });
 
     try {
-      if (result == 'camera') {
-        await _pickFromCamera();
-      } else if (result == 'gallery') {
-        await _pickFromGallery();
+      final allowMultiple = _photoState.canAddMore &&
+          _photoState.maxImages - _photoState.selectedImages.length > 1;
+
+      final images = await ImagePickerService.pickImages(
+        source: result,
+        allowMultiple: allowMultiple,
+      );
+
+      if (images.isNotEmpty) {
+        setState(() {
+          _photoState = _photoState.addImages(images);
+        });
       }
+    } on ImagePickerException catch (e) {
+      _showErrorSnackBar(e.toString());
+    } catch (e) {
+      _showErrorSnackBar('이미지 선택 중 오류가 발생했습니다');
     } finally {
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-
-  /// 카메라에서 이미지 선택
-  Future<void> _pickFromCamera() async {
-    try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-        maxWidth: 1024,
-        maxHeight: 1024,
-      );
-
-      if (image != null) {
-        setState(() {
-          _photoState = _photoState.addImage(image);
-        });
-
-        // 햅틱 피드백
-        HapticFeedback.selectionClick();
-
-        AppLogger.info('카메라에서 이미지 선택: ${image.path}');
-      }
-    } catch (e) {
-      AppLogger.error('카메라 이미지 선택 실패', error: e);
-      _showErrorSnackBar('카메라 사용 중 오류가 발생했습니다');
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    try {
-      if (_photoState.canAddMore &&
-          _photoState.maxImages - _photoState.selectedImages.length > 1) {
-        // 여러 장 선택 가능
-        final images = await _imagePicker.pickMultiImage(
-          imageQuality: 80,
-          maxWidth: 1024,
-          maxHeight: 1024,
-        );
-
-        if (images.isNotEmpty) {
-          setState(() {
-            _photoState = _photoState.addImages(images);
-          });
-
-          HapticFeedback.selectionClick();
-
-          AppLogger.info('갤러리에서 이미지 선택: ${images.length}장');
-        }
-      } else {
-        // 1장만 선택
-        final image = await _imagePicker.pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 80,
-          maxWidth: 1024,
-          maxHeight: 1024,
-        );
-
-        if (image != null) {
-          setState(() {
-            _photoState = _photoState.addImage(image);
-          });
-
-          HapticFeedback.selectionClick();
-
-          AppLogger.info('갤러리에서 이미지 선택: ${image.path}');
-        }
-      }
-    } catch (e) {
-      AppLogger.error('갤러리 이미지 선택 실패', error: e);
-      _showErrorSnackBar('갤러리 접근 중 오류가 발생했습니다');
     }
   }
 
@@ -298,44 +173,30 @@ class _PhotoSelectionDetailScreenState
   }
 
   Future<void> _submitPotholeReport() async {
+    // 위치 정보 확인
     if (_currentPosition == null) {
-      // 위치를 다시 가져오기 시도
       await _getCurrentLocation();
       if (_currentPosition == null) {
         throw Exception('위치 정보를 가져올 수 없습니다');
       }
     }
 
-    AppLogger.info('포트홀 신고 API 호출 시작');
-    AppLogger.info('위치: lat=${_currentPosition!.latitude}, lng=${_currentPosition!.longitude}');
-    AppLogger.info('이미지 개수: ${_photoState.selectedImages.length}');
-
-    try {
-      // XFile을 File로 변환
-      List<File>? imageFiles;
-      if (_photoState.hasImages) {
-        imageFiles = [];
-        for (final xFile in _photoState.selectedImages) {
-          imageFiles.add(File(xFile.path));
-          AppLogger.info('이미지 파일: ${xFile.path} (크기: ${await xFile.length()} bytes)');
-        }
-      }
-
-      // PotholeApiService를 사용하여 API 호출
-      final responseData = await PotholeApiService.reportPothole(
-        latitude: _currentPosition!.latitude,
-        longitude: _currentPosition!.longitude,
-        description: _descriptionController.text.trim().isEmpty
-            ? '포트홀 신고'
-            : _descriptionController.text.trim(),
-        images: imageFiles,
+    // 이미지 검증
+    if (_photoState.hasImages) {
+      final validationError = await PotholeReportSubmissionService.validateImages(
+        _photoState.selectedImages,
       );
-
-      AppLogger.info('포트홀 신고 API 성공: $responseData');
-    } catch (e) {
-      AppLogger.error('포트홀 신고 API 실패', error: e);
-      rethrow;
+      if (validationError != null) {
+        throw Exception(validationError);
+      }
     }
+
+    // 신고 제출 (서비스로 위임)
+    await PotholeReportSubmissionService.submitReport(
+      position: _currentPosition!,
+      description: _descriptionController.text,
+      images: _photoState.hasImages ? _photoState.selectedImages : null,
+    );
   }
 
   void _showErrorSnackBar(String message) {
@@ -415,10 +276,6 @@ class _PhotoSelectionDetailScreenState
 
           // 설명 입력란
           _buildDescriptionField(),
-          const SizedBox(height: 8),
-
-          // 동의 및 인증 섹션
-          _buildConsentSection(),
         ],
       ),
     );
@@ -431,10 +288,9 @@ class _PhotoSelectionDetailScreenState
         Text(
           '위치',
           style: AppTypography.bodyDefault.copyWith(
-            color: AppColors.textSecondary, // 원하는 그레이 색상
+            color: AppColors.textSecondary,
           ),
         ),
-        // const Icon(Icons.location_on, color: Color(0xFFFF6B35), size: 20),
       ],
     );
   }
@@ -469,7 +325,7 @@ class _PhotoSelectionDetailScreenState
         Text(
           '설명',
           style: AppTypography.bodyDefault.copyWith(
-            color: AppColors.textSecondary, // 원하는 그레이 색상
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -477,14 +333,14 @@ class _PhotoSelectionDetailScreenState
           height: 200,
           child: TextField(
             controller: _descriptionController,
-            maxLines: 20, // maxLines 제거
+            maxLines: 20,
             style: AppTypography.caption,
             decoration: InputDecoration(
               hintText: '내용을 적지 않아도 신고가 가능합니다.',
               hintStyle: const TextStyle(color: Colors.grey),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12, // 좌우 패딩
-                vertical: 24, // 위아래 패딩
+                horizontal: 12,
+                vertical: 24,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -503,170 +359,6 @@ class _PhotoSelectionDetailScreenState
         ),
       ],
     );
-  }
-
-  /// 동의 및 인증 섹션 구축
-  Widget _buildConsentSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 민원 제출 동의
-        Row(
-          children: [
-            Text('민원제출 동의', style: AppTypography.bodySm.copyWith()),
-            Checkbox(
-              value: _isConsentChecked,
-              onChanged: (value) {
-                setState(() {
-                  _isConsentChecked = value ?? false;
-                  if (!_isConsentChecked) {
-                    _isPhoneVerified = false;
-                    _isVerificationSent = false;
-                    _phoneController.clear();
-                    _verificationCodeController.clear();
-                  }
-                });
-              },
-              activeColor: const Color(0xFFFF6B35),
-            ),
-          ],
-        ),
-
-        // 휴대전화 인증 (동의 시에만 표시)
-        if (_isConsentChecked) ..._buildPhoneVerificationSection(),
-      ],
-    );
-  }
-
-  /// 휴대전화 인증 섹션 구축
-  List<Widget> _buildPhoneVerificationSection() {
-    return [
-      // 전화번호 입력
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                hintText: '전화번호를 입력해주세요.',
-                hintStyle: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12, // 여기서 크기 조절
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _sendVerificationCode,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B35),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('인증'),
-            ),
-          ),
-        ],
-      ),
-
-      // 인증번호 입력 (발송 후에만 표시)
-      if (_isVerificationSent) ...[
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _verificationCodeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: '인증번호를 입력해주세요.',
-                  hintStyle: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12, // 여기서 크기 조절
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFFF6B35)),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 14,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _isPhoneVerified ? null : _verifyCode,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isPhoneVerified
-                      ? Colors.grey[300]
-                      : const Color(0xFFFF6B35),
-                  foregroundColor: _isPhoneVerified
-                      ? Colors.grey[500]
-                      : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('확인'),
-              ),
-            ),
-          ],
-        ),
-      ],
-
-      // 인증 완료 메시지
-      if (_isPhoneVerified) ...[
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              '인증되었습니다.',
-              style: AppTypography.bodyDefault.copyWith(
-                color: Colors.green,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ];
   }
 
   /// 하단 버튼 영역

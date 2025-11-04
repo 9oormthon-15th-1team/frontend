@@ -14,8 +14,17 @@ import '../pothole_detail/models/pothole_info.dart';
 import '../pothole_detail/widgets/pothole_detail_bottom_sheet.dart';
 import 'models/pothole_marker.dart';
 
-/// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러
+/// 네이버 맵 관련 비즈니스 로직을 담당하는 컨트롤러 (Singleton)
 class MapController {
+  // Singleton 인스턴스
+  static final MapController _instance = MapController._internal();
+
+  // Factory 생성자로 항상 같은 인스턴스 반환
+  factory MapController() => _instance;
+
+  // Private 생성자
+  MapController._internal();
+
   static const double _defaultSearchDistance = 100000000;
   static const List<String> _fallbackDetailImages = [
     'assets/images/danger.png',
@@ -26,7 +35,7 @@ class MapController {
   NaverMapController? _mapController;
   final ValueNotifier<bool> _isMapReady = ValueNotifier<bool>(false);
   final ValueNotifier<NLatLng> _currentPosition = ValueNotifier<NLatLng>(
-    const NLatLng(37.5665, 126.9780), // 서울시청 기본 위치 (JSON 데이터와 맞춤)
+    const NLatLng(33.4998, 126.5313), // 서울시청 기본 위치 (JSON 데이터와 맞춤)
   );
   final ValueNotifier<String> _currentAddress = ValueNotifier<String>(
     '위치 로딩 중...',
@@ -1481,7 +1490,21 @@ class MapController {
     return sampleData;
   }
 
-  /// 메모리 해제
+  /// 맵 인스턴스 정리 (페이지를 떠날 때)
+  /// Singleton이므로 ValueNotifier는 dispose하지 않음
+  void resetMapInstance() {
+    _isMapReady.value = false;
+    _potholeMarkers.clear();
+    _activeMarkers.clear();
+    _markerIconCache.clear();
+    _clusterIconCache.clear();
+    _currentLocationOverlayImage = null;
+    _mapController = null;
+    _buildContext = null;
+    AppLogger.info('MapController 인스턴스 리셋 완료');
+  }
+
+  /// 완전한 메모리 해제 (앱 종료 시에만 사용)
   void dispose() {
     _isMapReady.dispose();
     _currentPosition.dispose();
@@ -1492,5 +1515,6 @@ class MapController {
     _clusterIconCache.clear();
     _currentLocationOverlayImage = null;
     _mapController = null;
+    _buildContext = null;
   }
 }

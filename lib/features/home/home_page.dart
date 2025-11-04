@@ -123,7 +123,8 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraChangeDebounce?.cancel();
-    _mapController.dispose();
+    // Singleton이므로 dispose 대신 resetMapInstance 사용
+    _mapController.resetMapInstance();
     PlusMenuState.isExpanded.removeListener(_onPlusMenuStateChanged);
     PlusMenuState.isExpanded.value = false;
     super.dispose();
